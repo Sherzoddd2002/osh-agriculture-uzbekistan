@@ -34,6 +34,8 @@ jobs:
           mkdir -p site
           cp index.html styles.css app.js site/
           touch site/.nojekyll
+          mkdir -p site/data/templates
+          cp data/templates/district-yield-template.csv site/data/templates/
           cp README.md site/PROJECT-README.md
 
       - name: Static code and data QA
