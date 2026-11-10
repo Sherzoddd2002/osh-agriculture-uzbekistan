@@ -1,0 +1,62 @@
+name: Build and deploy OSH AgroAI Uzbekistan
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: osh-agroai-uzbekistan-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and validate Uzbekistan data packages
+        run: python scripts/build_data.py --output site/data
+
+      - name: Assemble static site
+        run: |
+          mkdir -p site
+          cp index.html styles.css app.js site/
+          touch site/.nojekyll
+          cp README.md site/PROJECT-README.md
+
+      - name: Static code and data QA
+        run: |
+          python -m py_compile scripts/build_data.py scripts/qa.py
+          node --check site/app.js
+          python scripts/qa.py --site site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
