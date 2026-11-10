@@ -696,7 +696,7 @@ function showForecastResult(result,target,cropName,areaName,source){
   '</div>'+
   '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+'</b><br>'+
   'Manba: '+escapeHTML(source)+' · oxirgi kuzatuv: '+result.lastYear+' yilda '+fmt(result.last,2)+' t/ga. Taxminiy diapazon: '+fmt(lower,2)+'–'+fmt(upper,2)+' t/ga (± OOF MAE). '+
-  'Persistence bilan solishtirish: <b>'+(result.beatsPersistence?"OOF MAE undan past":"OOF MAE undan past emas")+'</b>. Iqlim qamrovi: '+fmt(result.coverage*100,1)+'%.</div>'+
+  'Persistence bilan solishtirish: <b>'+(result.beatsPersistence?"OOF MAE undan past":"OOF MAE undan past emas")+'</b>. OOF sinovlari: n='+result.oof.length+' ('+result.oof[0].year+'–'+result.oof[result.oof.length-1].year+'). Iqlim qamrovi: '+fmt(result.coverage*100,1)+'%.</div>'+
   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. Bu ssenariy, kafolat emas.</div>'+
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
