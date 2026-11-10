@@ -17,7 +17,7 @@ Public demo: https://sherzoddd2002.github.io/osh-agriculture-uzbekistan/
 
 - MAPSPAM 2020 — tarixiy fazoviy reference; 2026/2027-yil kuzatuvi yoki hosil prognozi emas.
 - SIAT rasmiy avtomatik qatorlari viloyat darajasida; ular tuman ma’lumoti sifatida ishlatilmaydi.
-- Tuman uchun AI ssenariysi kamida 8 yillik haqiqiy tuman/ekin hosildorlik CSV va mos ERA5-Land mavsumiy qatori talab qiladi.
+- Tuman uchun AI ssenariysi kamida 12 yillik haqiqiy tuman/ekin hosildorlik CSV va mos ERA5-Land mavsumiy qatori talab qiladi.
 - Prognoz — kelajak ob-havosi uchun tarixiy iqlim normasi ishlatiladigan ssenariy; kafolat yoki kuzatilgan natija emas.
 - MAPSPAM rasterining ekvatordagi nominal aniqligi taxminan 9.3 km; mayda dala chegarasi buni yuqori aniqlikdagi o‘lchovga aylantirmaydi.
 - GitHub Pages statik hosting: foydalanuvchi hisobi, server-side Python, markaziy ma’lumotlar bazasi yoki doimiy foydalanuvchi fayl saqlash bu MVP tarkibiga kirmaydi.
