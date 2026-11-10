@@ -45,6 +45,12 @@ def main() -> int:
     if "Kamida 12 ta mos hosildorlik yili" not in html:
         raise SystemExit("FAIL AI Predict page does not disclose the 12-year minimum")
     print("PASS AI model: 12-year aligned history, expanding-window OOF and test-count reporting")
+    for marker in ("function getDistrictDemoSeries()", "DEMO PROKSI", "demoProxy.baseYield"):
+        if marker not in js:
+            raise SystemExit(f"FAIL district demo proxy missing required marker: {marker}")
+    if "OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi" not in js:
+        raise SystemExit("FAIL district demo proxy must suppress unvalidated accuracy metrics")
+    print("PASS district demo proxy: MAPSPAM 2020 baseline + parent-region SIAT trend; no false OOF accuracy")
 
     template = (root / "data" / "templates" / "district-yield-template.csv").read_text(encoding="utf-8").splitlines()
     if not template or template[0].strip().lower() != "admin_name,crop_code,year,yield_t_ha":

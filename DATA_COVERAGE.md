@@ -18,10 +18,15 @@ MAPSPAM paketida 213 ta ma’muriy hudud (14 + 199) va 9,798 ta ekin xulosasi ma
 ## AI Predict metodologiyasi
 
 - Viloyat darajasida (ADM1) SIAT’dan ishlab chiqarish / ekilgan maydon nisbati olinadi. Bu t/ekilgan ga ko‘rsatkich; dala o‘lchovi yoki yig‘ib olingan maydonga asoslangan bevosita hosil o‘lchovi deb talqin qilinmaydi.
-- Tuman (ADM2) uchun aynan tanlangan tuman va ekinga tegishli kamida 12 yillik haqiqiy CSV kerak. CSV ustunlari: `admin_name,crop_code,year,yield_t_ha`. Dastur `admin_name` va `crop_code` qiymatlarini tanlov bilan solishtiradi.
+- Tuman (ADM2) uchun haqiqiy prognoz rejimida aynan tanlangan tuman va ekinga tegishli kamida 12 yillik CSV kerak. CSV ustunlari: `admin_name,crop_code,year,yield_t_ha`. Dastur `admin_name` va `crop_code` qiymatlarini tanlov bilan solishtiradi.
+- Startup namoyishi uchun ayrim tuman/ekin juftliklarida alohida **demo proksi** ishlaydi: MAPSPAM 2020 tuman hosildorligi bazaviy qiymat bo‘ladi; ota-viloyatning SIAT 2010–2024 hosildorlik qatori 2020-yilga nisbatan o‘zgarish koeffitsienti sifatida qo‘llanadi. Shu orqali 2010–2024 tuman proksi qatori shakllantirilib, ERA5-Land iqlim xususiyatlari bilan Ridge modeliga beriladi.
 - Hosildorlik qatori ERA5-Land mavsumiy harorat, yog‘in va ET₀ bilan moslashtiriladi.
 - Ridge modelining expanding-window OOF MAE ko‘rsatkichi Persistence (o‘tgan yil hosili) benchmarki bilan solishtiriladi.
 - Kelajakdagi ob-havo noma’lum bo‘lgani sababli target mavsum uchun oxirgi besh mos mavsumning iqlim normasi ishlatiladi. Natija ssenariy, kafolat yoki rasmiy operativ prognoz emas.
+
+### Demo proksi cheklovlari
+
+Demo proksi haqiqiy tuman yillik kuzatuvi emas: 2010–2024 qiymatlari MAPSPAM 2020 tuman bazasi va ota-viloyat SIAT nisbiy trendidan **hisoblab hosil qilingan**. Shu sababli demo natijada OOF MAE, Persistence MAE, aniqlik foizi yoki ishonch oralig‘i ko‘rsatilmaydi. Natija faqat mahsulot oqimini namoyish qilish va texnik sinov uchun; investitsion, sug‘urta, kredit yoki agronomik qaror uchun tasdiqlangan tuman prognozi sifatida ishlatilmasligi kerak. Haqiqiy tuman modeli uchun mustaqil yillik tuman hosildorligi va zonal iqlim/qishloq xo‘jaligi ma’lumotlari zarur.
 
 ## Hali integratsiya qilinmagan manbalar
 

@@ -4,6 +4,10 @@
 
 Public demo: https://sherzoddd2002.github.io/osh-agriculture-uzbekistan/
 
+## AI Predict demo rejimi
+
+Viloyat darajasida SIAT rasmiy qatorlari ishlatiladi. Ayrim tuman/ekin juftliklarida demo proksi MAPSPAM 2020 tuman bazasini ota-viloyat SIAT nisbiy trendi bilan kengaytiradi. Bu tarixiy tuman kuzatuvi emas; demo natijada validatsiya aniqligi ko‘rsatilmaydi. Haqiqiy tuman prognozi uchun aynan shu tuman bo‘yicha kamida 12 yillik tekshirilgan qator kerak.
+
 ## Nima bor?
 
 - O‘zbekistonning 14 ta viloyati (ADM1) va 199 ta tumani (ADM2) bo‘yicha interaktiv xarita.

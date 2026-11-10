@@ -139,7 +139,7 @@
           <div class="prediction-main">
             <div class="prediction-intro">
               <div class="ai-icon">✳</div>
-              <div><b id="forecast-heading">Avval xaritadan hudud va ekinni tanlang</b><p id="forecast-source">13 ta qishloq xo‘jaligi viloyati uchun SIAT manbasi mavjud ekinlarda avtomatik tarixiy qator yuklanadi. Tuman uchun aynan shu tuman/ekin CSV kerak.</p></div>
+              <div><b id="forecast-heading">Avval xaritadan hudud va ekinni tanlang</b><p id="forecast-source">Viloyatlarda SIAT rasmiy qatori avtomatik ishlaydi. Tumanlarda haqiqiy CSV yoki mavjud bo‘lsa MAPSPAM 2020 tuman bazasi + ota-viloyat SIAT trendiga tayangan alohida demo proksi qo‘llanadi.</p></div>
             </div>
             <div class="forecast-form">
               <div class="form-row">
@@ -156,7 +156,7 @@
               <div id="forecast-status" class="status-message" role="status">Prognoz manbasi tanlangan hudud va ekinga qarab aniqlanadi.</div>
             </div>
             <div id="forecast-result" class="forecast-result">
-              <div class="forecast-empty"><span>✳</span><b>Prognoz hali hisoblanmadi</b><p>Avtomatik SIAT qatori mavjud viloyat/ekin yoki haqiqiy tarixiy CSV tanlang.</p></div>
+              <div class="forecast-empty"><span>✳</span><b>Prognoz hali hisoblanmadi</b><p>SIAT rasmiy viloyat qatori, mavjud tuman demo proksisi yoki haqiqiy tarixiy CSV tanlang.</p></div>
             </div>
           </div>
           <aside class="prediction-side">
@@ -169,11 +169,11 @@
             </div>
             <div class="side-card model-note">
               <div class="side-card-head"><span>ⓘ</span><small>MODEL QOIDASI</small></div>
-              <ul><li>Kamida 12 ta mos hosildorlik yili.</li><li>Vaqt bo‘yicha expanding-window OOF tekshiruvi.</li><li>Persistence benchmark bilan solishtirish.</li><li>Kelajak iqlimi o‘rniga so‘nggi yillar normasi.</li></ul>
+              <ul><li>Kamida 12 ta mos hosildorlik yili.</li><li>Vaqt bo‘yicha expanding-window OOF tekshiruvi.</li><li>Persistence benchmark bilan solishtirish.</li><li>Kelajak iqlimi o‘rniga so‘nggi yillar normasi.</li><li>Tuman demo proksisi alohida belgilanadi; rasmiy tuman tarixi deb talqin qilinmaydi.</li></ul>
             </div>
           </aside>
         </div>
-        <div class="science-disclaimer"><b>Muhim:</b> AI natijasi — ssenariy, kafolatlangan hosil emas. MAPSPAM 2020 AI targeti sifatida ishlatilmaydi. Tuman uchun viloyat statistikasi tuman qiymati qilib ko‘rsatilmaydi. CSV brauzer ichida qoladi va serverga yuborilmaydi.</div>
+        <div class="science-disclaimer"><b>Muhim:</b> AI natijasi — ssenariy, kafolatlangan hosil emas. Viloyat prognozi SIAT rasmiy qatoriga tayanadi. Tuman demo rejimida MAPSPAM 2020 faqat bazaviy qiymat, ota-viloyat SIAT nisbiy trendi esa tarixiy proksi sifatida ishlatiladi; bu mustaqil tuman kuzatuvi yoki rasmiy tuman prognozi emas. Haqiqiy tuman rejimi uchun aynan shu tumanga tegishli CSV kerak. CSV brauzer ichida qoladi va serverga yuborilmaydi.</div>
       </section>
 
       <section class="section sources-section" id="sources">

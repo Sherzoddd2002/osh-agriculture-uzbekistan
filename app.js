@@ -491,12 +491,19 @@ function parseCSV(text){
  if(new Set(parsed.map(row=>row.year)).size!==parsed.length)throw new Error("CSV ichida takroriy yil bor. Har yil uchun bitta qator qoldiring.");
  return parsed.map(row=>({year:row.year,yield:row.yield}));
 }
-function getOfficialSeries(){
- const feature=state.selected;
- if(!feature||String(feature.properties?.shapeType||"").toUpperCase()!=="ADM1")return null;
+function getOfficialSeriesForFeature(feature){
+ if(!feature)return null;
+ let regionFeature=feature;
+ const selectedLevel=String(feature.properties?.shapeType||"").toUpperCase();
+ if(selectedLevel==="ADM2"){
+  const districtArea=areaForFeature(feature,"ADM2");
+  const parentId=String(districtArea?.parent_admin_id||"");
+  regionFeature=(state.adm1?.features||[]).find(f=>featureId(f)===parentId)||null;
+ }
+ if(!regionFeature||String(regionFeature.properties?.shapeType||"").toUpperCase()!=="ADM1")return null;
  const payload=state.siat[state.crop];
  if(!payload)return null;
- const wanted=normalize(featureName(feature));
+ const wanted=normalize(featureName(regionFeature));
  const aliases={
   "qoraqalpogiston respublikasi":["qoraqalpogiston","republic of karakalpakstan"],
   "toshkent shahri":["tashkent city"],
@@ -508,10 +515,34 @@ function getOfficialSeries(){
   return key===wanted||(aliases[wanted]||[]).some(a=>normalize(a)===key);
  });
  if(!item)return null;
- return item.records.map(r=>({year:Number(r.year),yield:Number(r.yield)}))
+ const records=item.records.map(r=>({year:Number(r.year),yield:Number(r.yield)}))
   .filter(r=>Number.isInteger(r.year)&&Number.isFinite(r.yield)&&r.yield>0)
   .sort((a,b)=>a.year-b.year);
+ return records.length?{regionName:featureName(regionFeature),records}:null;
 }
+function getOfficialSeries(){
+ const feature=state.selected;
+ if(!feature||String(feature.properties?.shapeType||"").toUpperCase()!=="ADM1")return null;
+ return getOfficialSeriesForFeature(feature)?.records||null;
+}
+function getDistrictDemoSeries(){
+ const feature=state.selected;
+ if(!feature||String(feature.properties?.shapeType||"").toUpperCase()!=="ADM2")return null;
+ const districtRecord=recordForFeature(feature,state.crop,"ADM2");
+ const baselineYield=Number(districtRecord?.yield_t_ha);
+ if(!Number.isFinite(baselineYield)||baselineYield<=0)return null;
+ const regional=getOfficialSeriesForFeature(feature);
+ if(!regional)return null;
+ const regionBase=regional.records.find(row=>row.year===2020);
+ if(!regionBase||!Number.isFinite(regionBase.yield)||regionBase.yield<=0)return null;
+ const series=regional.records.map(row=>({
+  year:row.year,
+  yield:baselineYield*(row.yield/regionBase.yield)
+ })).filter(row=>Number.isInteger(row.year)&&Number.isFinite(row.yield)&&row.yield>0);
+ if(series.length<12)return null;
+ return {series,baseYield:baselineYield,baseYear:2020,regionName:regional.regionName,regionBaseYield:regionBase.yield};
+}
+
 function updateForecastAvailability(){
  const button=$("run-forecast"),file=$("yield-csv").files[0];
  const autoSeries=getOfficialSeries();
@@ -519,11 +550,14 @@ function updateForecastAvailability(){
  const crop=CROP_LIST.find(x=>x[0]===state.crop);
  if(!selected){
   button.disabled=true;
+  button.innerHTML='AI ssenariysini hisoblash <span>↗</span>';
   $("forecast-source").textContent="Avval xaritadan viloyat yoki tumanni tanlang.";
   $("forecast-status").textContent="Prognoz uchun hudud tanlanmagan.";
   return;
  }
  const isDistrict=String(selected.properties?.shapeType||"").toUpperCase()==="ADM2";
+ const districtDemo=!file&&isDistrict?getDistrictDemoSeries():null;
+ button.innerHTML='AI ssenariysini hisoblash <span>↗</span>';
  if(autoSeries&&!file){
   button.disabled=false;
   $("forecast-source").textContent="SIAT rasmiy viloyat qatori tayyor: "+featureName(selected)+" · "+crop?.[1]+" · 2010–2024. CSV shart emas.";
@@ -536,16 +570,22 @@ function updateForecastAvailability(){
   button.disabled=false;
   $("forecast-source").textContent="Foydalanuvchi CSV qatori tanlangan hudud va ekin metama’lumotlari bilan tekshiriladi. Fayl serverga yuborilmaydi.";
   $("forecast-status").textContent="CSV tanlandi va qamrov tasdiqlandi. Hisoblashdan avval admin_name va crop_code qatorlari solishtiriladi.";
+ }else if(districtDemo){
+  button.disabled=false;
+  button.innerHTML='Demo AI ssenariysini hisoblash <span>↗</span>';
+  $("forecast-source").textContent="DEMO PROKSI mavjud: "+featureName(selected)+" · "+(crop?.[1]||state.crop)+". MAPSPAM 2020 tuman bazasi ota-viloyat SIAT 2010–2024 indekslari bilan kengaytiriladi. Bu haqiqiy tuman tarixi emas.";
+  $("forecast-status").textContent="Demo hisoblash mumkin. Natija tuman bo‘yicha mustaqil kuzatuvlar bilan tasdiqlanmagan.";
  }else if(isDistrict){
   button.disabled=true;
-  $("forecast-source").textContent="Tuman tanlandi. SIAT ochiq qatorlari viloyat darajasida; aynan shu tuman va ekin uchun kamida 12 yillik haqiqiy CSV kerak.";
-  $("forecast-status").textContent="Tuman uchun CSV yuklang. Viloyat ko‘rsatkichini tuman prognozi sifatida ishlatmaymiz.";
+  $("forecast-source").textContent="Tuman tanlandi. Demo proksi uchun ham MAPSPAM 2020 bazaviy hosildorligi va ota-viloyat SIAT qatori kerak; ulardan biri topilmadi. Haqiqiy tuman CSV yuklang.";
+  $("forecast-status").textContent="Aynan shu tuman va ekin uchun kamida 12 yillik haqiqiy CSV talab qilinadi.";
  }else{
   button.disabled=true;
   $("forecast-source").textContent="Bu viloyat/ekin uchun avtomatik SIAT qatori topilmadi. Aynan shu hudud va ekinga tegishli CSV yuklang.";
   $("forecast-status").textContent="CSV talab qilinadi.";
  }
 }
+
 function seasonForYear(year,start,end){
  const [sm,sd]=start.split("-").map(Number),[em,ed]=end.split("-").map(Number);
  const startYear=(sm>em)?year-1:year;
@@ -685,7 +725,20 @@ function getSelectedCenter(){
  if(!bounds||!bounds.isValid())return null;
  const center=bounds.getCenter();return {lat:center.lat,lon:center.lng};
 }
-function showForecastResult(result,target,cropName,areaName,source){
+function showForecastResult(result,target,cropName,areaName,source,demoProxy=null){
+ if(demoProxy){
+  $("forecast-result").innerHTML=
+   '<div class="forecast-kpis">'+
+    '<div class="forecast-kpi"><small>'+target+' YIL · DEMO AI SSENARIY</small><strong>'+fmt(result.forecast,2)+'</strong><em>tonna / gektar</em></div>'+
+    '<div class="forecast-kpi"><small>MAPSPAM 2020 · TUMAN BAZASI</small><strong>'+fmt(demoProxy.baseYield,2)+'</strong><em>t/ga · fazoviy reference</em></div>'+
+    '<div class="forecast-kpi"><small>HISTORIK PROKSI QATOR</small><strong>'+demoProxy.series.length+'</strong><em>yil · '+demoProxy.series[0].year+'–'+demoProxy.series[demoProxy.series.length-1].year+'</em></div>'+
+   '</div>'+
+   '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+' · DEMO PROKSI</b><br>'+
+   'Manba: '+escapeHTML(source)+'. 2020-yil tuman MAPSPAM hosildorligi '+fmt(demoProxy.baseYield,2)+' t/ga bazaviy qiymat sifatida olinadi. U ota-hudud — '+escapeHTML(demoProxy.regionName)+' — SIAT qatorining 2020-yilga nisbiy o‘zgarishlari bilan 2010–2024 davriga kengaytiriladi.</div>'+
+   '<div class="forecast-benchmark"><b>Talqin cheklovi:</b> 2010–2024 tuman qatori bevosita kuzatilgan statistika emas, balki viloyat trendidan hosil qilingan proksi. Shu sababli OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi. Natija faqat startup namoyishi va model oqimini sinash uchun; tuman darajasidagi rasmiy prognoz yoki mustaqil validatsiya emas.</div>'+
+   '<div class="forecast-benchmark">ERA5-Land mavsumiy iqlim ko‘rsatkichlari modelga qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>';
+  return;
+ }
  const lower=Math.max(0,result.forecast-result.mae),upper=result.forecast+result.mae;
  const rows=result.oof.slice(-6).map(row=>'<tr><td>'+row.year+'</td><td>'+fmt(row.actual,2)+'</td><td>'+fmt(row.prediction,2)+'</td><td>'+fmt(row.persistence,2)+'</td><td>'+fmt(row.error,2)+'</td></tr>').join("");
  $("forecast-result").innerHTML=
@@ -700,6 +753,7 @@ function showForecastResult(result,target,cropName,areaName,source){
   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. Bu ssenariy, kafolat emas.</div>'+
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
+
 async function runForecast(){
  const feature=state.selected;
  if(!feature)throw new Error("Avval xaritadan hududni tanlang.");
@@ -707,15 +761,19 @@ async function runForecast(){
  const target=Number($("target-year").value);
  if(!Number.isInteger(target)||target<2026||target>2040)throw new Error("Maqsadli yil 2026–2040 oralig‘ida bo‘lishi kerak.");
  const inputFile=$("yield-csv").files[0];
- let series,source;
+ let series,source,demoProxy=null;
  if(inputFile){
   if(!$("csv-scope-confirm").checked)throw new Error("CSV aynan tanlangan hudud va ekin uchun ekanini tasdiqlang.");
   series=parseCSV(await inputFile.text());
   source="Foydalanuvchi CSV · hudud/ekin metadata tekshirildi · lokal brauzer";
  }else{
   series=getOfficialSeries();
-  if(!series)throw new Error("Tanlangan hudud/ekin uchun rasmiy avtomatik qator yo‘q. CSV yuklang.");
-  source="SIAT rasmiy viloyat statistikasi";
+  if(!series&&String(feature.properties?.shapeType||"").toUpperCase()==="ADM2"){
+   demoProxy=getDistrictDemoSeries();
+   if(demoProxy){series=demoProxy.series;source="DEMO PROKSI: MAPSPAM 2020 tuman bazasi × ota-viloyat SIAT indeksi";}
+  }
+  if(!series)throw new Error("Tanlangan hudud/ekin uchun SIAT yoki demo proksi qatori topilmadi. Haqiqiy CSV yuklang.");
+  if(!source)source="SIAT rasmiy viloyat statistikasi";
  }
  if(series.length<12)throw new Error("Kamida 12 ta yillik kuzatuv kerak.");
  if(target<=series[series.length-1].year)throw new Error("Maqsadli yil oxirgi kuzatilgan yildan keyin bo‘lishi kerak.");
@@ -734,8 +792,8 @@ async function runForecast(){
   const climate=await fetchClimateSeries(center,series,start,end);
   $("forecast-status").textContent="Iqlim va hosildorlik qatorlari moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
   const result=runYieldRidge(series,climate,target);
-  showForecastResult(result,target,cropName,featureName(feature),source);
-  $("forecast-status").textContent="Ssenariy tayyor · "+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
+  showForecastResult(result,target,cropName,featureName(feature),source,demoProxy);
+  $("forecast-status").textContent=(demoProxy?"DEMO PROKSI tayyor · ":"Ssenariy tayyor · ")+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
  }finally{
   updateForecastAvailability();
  }
