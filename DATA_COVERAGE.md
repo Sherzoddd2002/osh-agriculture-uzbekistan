@@ -18,7 +18,7 @@ MAPSPAM paketida 213 ta ma’muriy hudud (14 + 199) va 9,798 ta ekin xulosasi ma
 ## AI Predict metodologiyasi
 
 - Viloyat darajasida (ADM1) SIAT’dan ishlab chiqarish / ekilgan maydon nisbati olinadi. Bu t/ekilgan ga ko‘rsatkich; dala o‘lchovi yoki yig‘ib olingan maydonga asoslangan bevosita hosil o‘lchovi deb talqin qilinmaydi.
-- Tuman (ADM2) uchun aynan tanlangan tuman va ekinga tegishli kamida 8 yillik haqiqiy CSV kerak. CSV ustunlari: `admin_name,crop_code,year,yield_t_ha`. Dastur `admin_name` va `crop_code` qiymatlarini tanlov bilan solishtiradi.
+- Tuman (ADM2) uchun aynan tanlangan tuman va ekinga tegishli kamida 12 yillik haqiqiy CSV kerak. CSV ustunlari: `admin_name,crop_code,year,yield_t_ha`. Dastur `admin_name` va `crop_code` qiymatlarini tanlov bilan solishtiradi.
 - Hosildorlik qatori ERA5-Land mavsumiy harorat, yog‘in va ET₀ bilan moslashtiriladi.
 - Ridge modelining expanding-window OOF MAE ko‘rsatkichi Persistence (o‘tgan yil hosili) benchmarki bilan solishtiriladi.
 - Kelajakdagi ob-havo noma’lum bo‘lgani sababli target mavsum uchun oxirgi besh mos mavsumning iqlim normasi ishlatiladi. Natija ssenariy, kafolat yoki rasmiy operativ prognoz emas.
