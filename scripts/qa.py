@@ -69,6 +69,7 @@ def main() -> int:
     ):
         raise SystemExit("FAIL MAPSPAM identity/license")
     levels = mapspam.get("levels") or {}
+    boundary_id_sets = {}
     for level, expected in (("ADM1", 14), ("ADM2", 199)):
         areas = (levels.get(level) or {}).get("areas") or {}
         if len(areas) != expected:
@@ -76,6 +77,28 @@ def main() -> int:
         for area_id, area in areas.items():
             if len(area.get("crops") or {}) != 46:
                 raise SystemExit(f"FAIL MAPSPAM crop count: {level}/{area_id}")
+        boundary = read_json(root / "data" / "boundaries" / f"UZB_{level}.geojson")
+        boundary_ids = {
+            str((feature.get("properties") or {}).get("shapeID") or "").strip()
+            for feature in (boundary.get("features") or [])
+        }
+        mapspam_ids = set(areas)
+        if boundary_ids != mapspam_ids:
+            raise SystemExit(
+                f"FAIL {level} boundary/MAPSPAM ID mismatch: "
+                f"boundary-only={len(boundary_ids - mapspam_ids)}, "
+                f"MAPSPAM-only={len(mapspam_ids - boundary_ids)}"
+            )
+        boundary_id_sets[level] = boundary_ids
+        print(f"PASS {level}: boundary IDs and MAPSPAM IDs match {expected}/{expected}")
+
+    district_parents = {
+        str(area.get("parent_admin_id") or "").strip()
+        for area in (levels["ADM2"]["areas"] or {}).values()
+    }
+    if district_parents != boundary_id_sets["ADM1"]:
+        raise SystemExit("FAIL MAPSPAM ADM2 parent IDs do not match the 14 ADM1 boundary IDs")
+
     print("PASS MAPSPAM: UZB · ADM1=14 · ADM2=199 · 46 crops · 2020 reference")
 
     siat = manifest.get("siat") or {}
