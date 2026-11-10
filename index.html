@@ -148,9 +148,11 @@
                 <label><span>Mavsum tugashi</span><input id="season-end" type="text" value="06-30" placeholder="MM-DD"></label>
               </div>
               <div class="csv-row">
-                <label class="file-drop" for="yield-csv"><span class="file-icon">⇧</span><span><b>Tuman hosildorligi CSV</b><small id="csv-label">Tuman yoki boshqa ekin uchun kamida 8 yillik haqiqiy qator</small></span><input id="yield-csv" type="file" accept=".csv,text/csv"></label>
+                <label class="file-drop" for="yield-csv"><span class="file-icon">⇧</span><span><b>Tuman hosildorligi CSV</b><small id="csv-label">Aynan tanlangan tuman + ekin uchun kamida 8 yillik haqiqiy qator</small></span><input id="yield-csv" type="file" accept=".csv,text/csv"></label>
                 <button id="run-forecast" class="button button-primary" type="button" disabled>AI ssenariysini hisoblash <span>↗</span></button>
               </div>
+              <div class="csv-guidance"><a href="./data/templates/district-yield-template.csv" download>CSV shablonini yuklab olish ↓</a><span>Ustunlar: admin_name, crop_code, year, yield_t_ha</span></div>
+              <label class="csv-scope-confirm"><input id="csv-scope-confirm" type="checkbox"><span>CSV aynan tanlangan hudud va ekinga tegishli haqiqiy statistik ma’lumot ekanini tasdiqlayman. Boshqa tuman/viloyat raqamini ko‘chirmayman.</span></label>
               <div id="forecast-status" class="status-message" role="status">Prognoz manbasi tanlangan hudud va ekinga qarab aniqlanadi.</div>
             </div>
             <div id="forecast-result" class="forecast-result">
