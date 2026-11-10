@@ -239,7 +239,7 @@ def siat_document(payload: object, code: str, unit: str) -> dict:
     metadata = payload.get("metadata") or []
     values = {row.get("name_en"): row.get("value_en") for row in metadata if isinstance(row, dict)}
     if values.get("Indicator identification number (code)") != code:
-        raise ValueError(f"SIAT indicator code mismatch: {values.get('Indicator identification number (code'))!r}")
+        raise ValueError(f"SIAT {code} indicator code mismatch: {values.get('Indicator identification number (code')!r}")
     if values.get("Unit of measurement") != unit:
         raise ValueError(f"SIAT {code} unit mismatch: {values.get('Unit of measurement')!r}")
     rows = payload.get("data")
