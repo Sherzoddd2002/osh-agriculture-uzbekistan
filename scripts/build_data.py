@@ -213,6 +213,25 @@ def build_mapspam(output: Path) -> dict:
     if parent_ids != adm1_ids:
         raise ValueError("UZB ADM2 parent ID to‘plami 14 ta ADM1 bilan mos emas")
 
+    # Critical integrity check: every published GeoJSON polygon must resolve
+    # to exactly one MAPSPAM administrative ID. This prevents silent name-only
+    # mismatches between a newer boundary vintage and the historical summary.
+    for level in ("ADM1", "ADM2"):
+        boundary_path = output / "boundaries" / f"UZB_{level}.geojson"
+        boundary_payload = json.loads(boundary_path.read_text(encoding="utf-8"))
+        boundary_ids = {
+            str((feature.get("properties") or {}).get("shapeID") or "").strip()
+            for feature in (boundary_payload.get("features") or [])
+        }
+        mapspam_ids = set((levels[level]["areas"] or {}).keys())
+        if "" in boundary_ids or boundary_ids != mapspam_ids:
+            missing = sorted(mapspam_ids - boundary_ids)[:5]
+            extra = sorted(boundary_ids - mapspam_ids)[:5]
+            raise ValueError(
+                f"UZB {level} boundary/MAPSPAM IDs do not match; "
+                f"missing_in_boundary={missing}, extra_in_boundary={extra}"
+            )
+
     target = output / "mapspam" / "UZB.json.gz"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
