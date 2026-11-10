@@ -144,7 +144,7 @@ async function loadSIAT(){
 
 function colorFor(value,min,max){
  if(value===null||value===undefined||!Number.isFinite(Number(value)))return "#e4e9e1";
- const t=max===min?.5:Math.max(0,Math.min(1,(Number(value)-min)/(max-min)));
+ const t=max===min?0.5:Math.max(0,Math.min(1,(Number(value)-min)/(max-min)));
  const stops=[[240,234,193],[151,194,134],[43,119,76]];
  const pos=t*2, i=Math.min(1,Math.floor(pos)), f=pos-i;
  const a=stops[i],b=stops[i+1];
@@ -170,7 +170,7 @@ function styleFeature(feature,range){
   weight:selected?2.5:1,
   opacity:.95,
   fillColor:colorFor(record?.yield_t_ha,range.min,range.max),
-  fillOpacity:record?.yield_t_ha===null||record?.yield_t_ha===undefined?.32:.84
+  fillOpacity:(record?.yield_t_ha===null||record?.yield_t_ha===undefined)?0.32:0.84
  };
 }
 function initMap(){
