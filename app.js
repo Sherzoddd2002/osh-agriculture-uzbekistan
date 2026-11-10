@@ -120,7 +120,10 @@ function featureRawName(feature){
 }
 function featureName(feature){
  const raw=String(featureRawName(feature)).trim();
- return UZB_NAMES[normalize(raw)] || raw;
+ const key=normalize(raw);
+ const level=String(feature?.properties?.shapeType||"").toUpperCase();
+ if(key==="tashkent"&&level==="ADM1")return "Toshkent shahri";
+ return UZB_NAMES[key] || raw;
 }
 function currentAreas(){
  return state.mapspam?.levels?.[state.level]?.areas || {};
@@ -409,6 +412,11 @@ function renderCropRanking(area){
 }
 function syncCrop(){
  state.crop=$("crop-select").value;
+ const preset=WEATHER_SEASONS[state.crop];
+ if(preset){
+  $("season-start").value=preset[0];
+  $("season-end").value=preset[1];
+ }
  renderBoundaryLayer();
  if(state.selected)updateSelection(state.selected);
 }
@@ -758,9 +766,7 @@ function wireUI(){
   if(feature)selectFeature(feature,true);
  });
  $("crop-select").addEventListener("change",()=>{
-  state.crop=$("crop-select").value;
-  renderBoundaryLayer();
-  if(state.selected)updateSelection(state.selected);
+  syncCrop();
  });
  $("area-search").addEventListener("input",()=>{
   if(state.level==="ADM2"){setDistrictOptions();}
@@ -785,6 +791,7 @@ function wireUI(){
  }));
 }
 async function init(){
+ $("target-year").value=String(new Date().getFullYear()+1);
  loadCropOptions();wireUI();
  if(!window.L){setDataHealth("Xarita kutubxonasi yuklanmadi",false);setStatus("Leaflet CDN yuklanmadi.","error");return;}
  initMap();
