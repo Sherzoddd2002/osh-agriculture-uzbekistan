@@ -40,6 +40,11 @@ def main() -> int:
     for required_marker in ("NO_RASTER_CELLS", "Persistence", "ERA5-Land", "UZB"):
         if required_marker not in js:
             raise SystemExit(f"FAIL app.js missing required marker: {required_marker}")
+    if "aligned.length<12" not in js or "for(let i=8;i<aligned.length;i++)" not in js or "result.oof.length" not in js:
+        raise SystemExit("FAIL AI model minimum-history or OOF reporting guard")
+    if "Kamida 12 ta mos hosildorlik yili" not in html:
+        raise SystemExit("FAIL AI Predict page does not disclose the 12-year minimum")
+    print("PASS AI model: 12-year aligned history, expanding-window OOF and test-count reporting")
 
     template = (root / "data" / "templates" / "district-yield-template.csv").read_text(encoding="utf-8").splitlines()
     if not template or template[0].strip().lower() != "admin_name,crop_code,year,yield_t_ha":
@@ -117,8 +122,14 @@ def main() -> int:
             series = read_json(file_path)
             if series.get("country_iso3") != "UZB" or series.get("admin_level") != "ADM1" or series.get("district_yield_available") is not False:
                 raise SystemExit(f"FAIL SIAT {crop}: geography or provenance mismatch")
-            if len(series.get("regions") or []) != 13:
+            regions = series.get("regions") or []
+            if len(regions) != 13:
                 raise SystemExit(f"FAIL SIAT {crop}: expected 13 agricultural regions")
+            minimum_years = 12 if crop == "whea" else 15
+            for region in regions:
+                years = [row.get("year") for row in (region.get("records") or [])]
+                if len(years) < minimum_years or years != sorted(set(years)):
+                    raise SystemExit(f"FAIL SIAT {crop}: incomplete/non-monotonic yearly series for {region.get('name_uz')}")
             print(f"PASS SIAT {crop}: 13 ADM1 regions; explicitly not district data")
         else:
             print(f"WARN SIAT {crop}: source unavailable; CSV fallback remains enabled")
