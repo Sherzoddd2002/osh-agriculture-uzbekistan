@@ -22,6 +22,16 @@ Public demo: https://sherzoddd2002.github.io/osh-agriculture-uzbekistan/
 - MAPSPAM rasterining ekvatordagi nominal aniqligi taxminan 9.3 km; mayda dala chegarasi buni yuqori aniqlikdagi o‘lchovga aylantirmaydi.
 - GitHub Pages statik hosting: foydalanuvchi hisobi, server-side Python, markaziy ma’lumotlar bazasi yoki doimiy foydalanuvchi fayl saqlash bu MVP tarkibiga kirmaydi.
 
+## Bir martalik GitHub Pages sozlamasi
+
+Birinchi deploydan oldin repository egasi quyidagini bir marta yoqadi:
+
+1. **Settings → Pages** sahifasini oching.
+2. **Build and deployment → Source** maydonida **GitHub Actions** ni tanlang.
+3. Saqlang. Keyingi `main` push avtomatik build va deploy qiladi.
+
+GitHub Actions workflow ma’lumot paketlarini yig‘adi, tekshiradi va statik saytni joylaydi. GitHub Pages yoqilmagan bo‘lsa, build muvaffaqiyatli tugashi mumkin, lekin deploy bajarilmaydi.
+
 ## Deploy
 
 Repository `main` branch'ga push qilinganda GitHub Actions:
