@@ -1,0 +1,33 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Generated GitHub Pages build output
+site/
+
+# Local data and logs
+*.sqlite
+*.sqlite3
+*.db
+*.log
+*.tmp
+
+# User uploads (keep only the empty CSV template shipped with the app)
+*.csv
+!data/templates/*.csv
+
+# Node and editor files
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
