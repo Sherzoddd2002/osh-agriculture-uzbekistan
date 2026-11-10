@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10251d">
+  <meta name="description" content="OSH AgroAI Uzbekistan — O‘zbekiston viloyat va tumanlari bo‘yicha agrar ma’lumotlar, iqlim tahlili va tekshiriladigan AI hosildorlik ssenariylari.">
+  <title>OSH AgroAI Uzbekistan — Agrar Intelligence</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="OSH AgroAI Uzbekistan">
+        <span class="brand-mark">O</span>
+        <span class="brand-copy"><b>OSH <em>AgroAI</em></b><small>UZBEKISTAN INTELLIGENCE</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Asosiy navigatsiya">
+        <a class="nav-link active" href="#overview">Bosh sahifa</a>
+        <a class="nav-link" href="#workspace">Hududlar</a>
+        <a class="nav-link" href="#prediction">AI Predict</a>
+        <a class="nav-link" href="#sources">Ma’lumotlar</a>
+      </nav>
+      <div class="topbar-right">
+        <span class="country-pill"><i></i> O‘ZBEKISTON</span>
+        <a class="contact-link" href="mailto:hello@osh-agro.ai">Bog‘lanish <span>↗</span></a>
+      </div>
+      <button class="mobile-menu" id="mobile-menu" aria-label="Menyuni ochish">☰</button>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="overview">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-dot"></span> O‘ZBEKISTON QISHLOQ XO‘JALIGI UCHUN</div>
+            <h1>Har bir hudud.<br><span>Aniqroq qarorlar.</span></h1>
+            <p class="hero-lead">Yer, ekin, iqlim va hosildorlik ma’lumotlarini bitta agrar intelligence platformasida birlashtiramiz.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#workspace">Hududni o‘rganish <span>↗</span></a>
+              <a class="button button-ghost" href="#prediction">AI Predict bilan tanishish <span>→</span></a>
+            </div>
+            <div class="hero-trust"><span class="trust-check">✓</span> Manbasi ko‘rsatilgan ma’lumot · tekshiriladigan ssenariylar</div>
+          </div>
+          <div class="hero-visual" aria-label="O‘zbekiston agrar xaritasi tasviri">
+            <div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div>
+            <div class="visual-glow"></div>
+            <div class="visual-country">
+              <div class="country-outline"></div>
+              <div class="visual-pin pin-a"></div><div class="visual-pin pin-b"></div><div class="visual-pin pin-c"></div>
+            </div>
+            <div class="floating-card card-yield"><span class="float-label">AGRAR QAMROV</span><strong>14 <small>viloyat</small></strong><div class="float-bar"><i style="width:100%"></i></div><span class="float-foot">199 ta tuman</span></div>
+            <div class="floating-card card-ai"><span class="ai-spark">✳</span><div><b>AI Predict</b><small>Dalilga asoslangan ssenariy</small></div><span class="float-arrow">↗</span></div>
+            <div class="visual-caption">UZBEKISTAN · AGRICULTURE DATA LAYER</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="metric-strip" aria-label="Platforma qamrovi">
+        <article class="metric-item"><span class="metric-icon">⌖</span><div><strong id="metric-provinces">14</strong><small>Viloyat</small></div></article>
+        <article class="metric-item"><span class="metric-icon">▦</span><div><strong id="metric-districts">199</strong><small>Tuman / shahar</small></div></article>
+        <article class="metric-item"><span class="metric-icon">♧</span><div><strong id="metric-crops">46</strong><small>MAPSPAM ekin qatlami</small></div></article>
+        <article class="metric-item"><span class="metric-icon">◷</span><div><strong>2020</strong><small>Fazoviy reference yili</small></div></article>
+        <div class="data-health" id="data-health"><span class="pulse"></span><span>Ma’lumot paketlari tekshirilmoqda…</span></div>
+      </section>
+
+      <section class="section workspace-section" id="workspace">
+        <div class="section-heading">
+          <div><div class="section-kicker">01 / HUDUDIY INTELLIGENCE</div><h2>O‘zbekiston xaritasi</h2><p>Viloyat yoki tumanni tanlang. Ekin ko‘rsatkichlari tanlangan hududga mos ravishda yangilanadi.</p></div>
+          <div class="section-side-note"><span class="live-dot"></span> INTERAKTIV HUDUDIY TAHLIL</div>
+        </div>
+
+        <div class="workspace">
+          <aside class="control-panel">
+            <div class="panel-overline">HUDUD FILTRLARI <span>01—03</span></div>
+            <label class="field-label" for="admin-level">Ma’muriy daraja</label>
+            <select id="admin-level" class="form-control">
+              <option value="ADM1">Viloyatlar · ADM1</option>
+              <option value="ADM2">Tumanlar va shaharlar · ADM2</option>
+            </select>
+            <label class="field-label" for="province-select">Viloyat</label>
+            <select id="province-select" class="form-control"><option value="">Barcha viloyatlar</option></select>
+            <label class="field-label" for="district-select">Tuman / shahar</label>
+            <select id="district-select" class="form-control" disabled><option value="">Avval viloyatni tanlang</option></select>
+            <div class="field-divider"></div>
+            <div class="panel-overline">EKIN FILTRI <span>04</span></div>
+            <label class="field-label" for="crop-select">Ekin turi</label>
+            <select id="crop-select" class="form-control"></select>
+            <label class="field-label" for="area-search">Hudud nomini qidirish</label>
+            <input id="area-search" class="form-control" type="search" placeholder="Masalan, Pastdarg‘om…">
+            <div class="map-legend">
+              <div class="legend-title">Hosildorlik xaritasi <small>t/ga · MAPSPAM 2020</small></div>
+              <div class="legend-gradient"></div><div class="legend-scale"><span>Past</span><span>Yuqori</span></div>
+              <div class="legend-note">Rang faqat tanlangan ekin uchun yaroqli raster qiymatlari mavjud bo‘lgan hududlarda ko‘rsatiladi.</div>
+            </div>
+            <div class="boundary-note"><b>Chegara manbasi</b><span>geoBoundaries · ADM1 / ADM2</span><small>Chegara yili va litsenziyasi ma’lumotlar bo‘limida ko‘rsatiladi.</small></div>
+          </aside>
+
+          <div class="map-panel">
+            <div class="map-toolbar">
+              <div><b id="map-title">O‘zbekiston · Viloyatlar</b><small id="map-subtitle">Xaritadagi hududni bosib tanlang</small></div>
+              <div class="map-actions"><button id="zoom-country" class="icon-button" type="button" title="O‘zbekiston ko‘rinishi">⌖</button><button id="map-fullscreen" class="icon-button" type="button" title="Xaritani kattalashtirish">⛶</button></div>
+            </div>
+            <div id="map" role="application" aria-label="O‘zbekiston ma’muriy hududlar xaritasi"></div>
+            <div class="map-footer"><span><i class="map-dot"></i> Hudud tanlash uchun poligonni bosing</span><span id="map-status">Xarita yuklanmoqda…</span></div>
+          </div>
+
+          <aside class="detail-panel">
+            <div class="detail-top"><div class="panel-overline">TANLANGAN HUDUD <span>LIVE</span></div><div class="detail-location-icon">⌖</div></div>
+            <h3 id="selected-name">Hudud tanlanmagan</h3>
+            <p id="selected-meta" class="detail-meta">Xaritadan viloyat yoki tumanni tanlang.</p>
+            <div class="detail-badge" id="selected-level">ADM —</div>
+            <div class="detail-divider"></div>
+            <div class="detail-subhead"><b>Ekin ko‘rsatkichlari</b><span>MAPSPAM · 2020</span></div>
+            <div class="yield-highlight"><small>REFERENCE HOSILDORLIK</small><strong id="selected-yield">— <em>t/ga</em></strong><span id="yield-status">Hudud tanlanmagan</span></div>
+            <div class="mini-metrics">
+              <div><small>Ishlab chiqarish</small><b id="selected-production">—</b><em>tonna</em></div>
+              <div><small>Yig‘im maydoni</small><b id="selected-harvested">—</b><em>gektar</em></div>
+              <div><small>Fizik maydon</small><b id="selected-physical">—</b><em>gektar</em></div>
+              <div><small>Yaroqli raster</small><b id="selected-cells">—</b><em>katak</em></div>
+            </div>
+            <div class="detail-divider"></div>
+            <div class="detail-subhead"><b>Yetakchi ekinlar</b><span>TOP 5 · ISHLAB CHIQARISH</span></div>
+            <div class="crop-ranking" id="crop-ranking"><div class="empty-state">Hududni tanlang.</div></div>
+            <div class="detail-source" id="detail-source">Manba: IFPRI MAPSPAM 2020 v2r2 · 5 arc-minute · CC BY-SA 4.0.</div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section prediction-section" id="prediction">
+        <div class="section-heading">
+          <div><div class="section-kicker">02 / AI PREDICT</div><h2>Kelgusi hosil ssenariysi</h2><p>Tanlangan hudud va ekinning tarixiy hosildorligini mavsumiy ERA5-Land iqlim qatori bilan birlashtirib baholang.</p></div>
+          <div class="section-side-note ai-note"><span>✳</span> RIDGE · TIME-AWARE VALIDATION</div>
+        </div>
+        <div class="prediction-grid">
+          <div class="prediction-main">
+            <div class="prediction-intro">
+              <div class="ai-icon">✳</div>
+              <div><b id="forecast-heading">Avval xaritadan hudud va ekinni tanlang</b><p id="forecast-source">13 ta qishloq xo‘jaligi viloyati uchun SIAT manbasi mavjud ekinlarda avtomatik tarixiy qator yuklanadi. Tuman uchun aynan shu tuman/ekin CSV kerak.</p></div>
+            </div>
+            <div class="forecast-form">
+              <div class="form-row">
+                <label><span>Maqsadli hosil yili</span><input id="target-year" type="number" min="2026" max="2040" value="2027"></label>
+                <label><span>Mavsum boshlanishi</span><input id="season-start" type="text" value="10-01" placeholder="MM-DD"></label>
+                <label><span>Mavsum tugashi</span><input id="season-end" type="text" value="06-30" placeholder="MM-DD"></label>
+              </div>
+              <div class="csv-row">
+                <label class="file-drop" for="yield-csv"><span class="file-icon">⇧</span><span><b>Tuman hosildorligi CSV</b><small id="csv-label">Tuman yoki boshqa ekin uchun kamida 8 yillik haqiqiy qator</small></span><input id="yield-csv" type="file" accept=".csv,text/csv"></label>
+                <button id="run-forecast" class="button button-primary" type="button" disabled>AI ssenariysini hisoblash <span>↗</span></button>
+              </div>
+              <div id="forecast-status" class="status-message" role="status">Prognoz manbasi tanlangan hudud va ekinga qarab aniqlanadi.</div>
+            </div>
+            <div id="forecast-result" class="forecast-result">
+              <div class="forecast-empty"><span>✳</span><b>Prognoz hali hisoblanmadi</b><p>Avtomatik SIAT qatori mavjud viloyat/ekin yoki haqiqiy tarixiy CSV tanlang.</p></div>
+            </div>
+          </div>
+          <aside class="prediction-side">
+            <div class="side-card climate-card">
+              <div class="side-card-head"><span>⌁</span><small>HUDUD IQLIMI</small><i id="climate-state">KUTILMOQDA</i></div>
+              <h3 id="climate-location">Hudud tanlanmagan</h3>
+              <div class="weather-now"><strong id="weather-temp">—°</strong><div><b id="weather-label">Ob-havo ma’lumoti</b><small id="weather-updated">Open-Meteo · 7 kunlik prognoz</small></div></div>
+              <div class="weather-grid"><div><small>Yog‘in</small><b id="weather-rain">—</b></div><div><small>Shamol</small><b id="weather-wind">—</b></div></div>
+              <div class="weather-foot">Vakillik koordinatasi · tuman bo‘yicha zonal o‘rtacha emas.</div>
+            </div>
+            <div class="side-card model-note">
+              <div class="side-card-head"><span>ⓘ</span><small>MODEL QOIDASI</small></div>
+              <ul><li>Kamida 8 ta mos hosildorlik yili.</li><li>Vaqt bo‘yicha expanding-window OOF tekshiruvi.</li><li>Persistence benchmark bilan solishtirish.</li><li>Kelajak iqlimi o‘rniga so‘nggi yillar normasi.</li></ul>
+            </div>
+          </aside>
+        </div>
+        <div class="science-disclaimer"><b>Muhim:</b> AI natijasi — ssenariy, kafolatlangan hosil emas. MAPSPAM 2020 AI targeti sifatida ishlatilmaydi. Tuman uchun viloyat statistikasi tuman qiymati qilib ko‘rsatilmaydi. CSV brauzer ichida qoladi va serverga yuborilmaydi.</div>
+      </section>
+
+      <section class="section sources-section" id="sources">
+        <div class="section-heading"><div><div class="section-kicker">03 / DATA PROVENANCE</div><h2>Ma’lumotlar va manbalar</h2><p>Har bir ko‘rsatkich qaysi manbadan olingani va qanday cheklovga ega ekanini ko‘ring.</p></div></div>
+        <div class="source-grid">
+          <article class="source-card"><div class="source-symbol">▦</div><span class="source-type">FAZOVIY EKIN MA’LUMOTI</span><h3>IFPRI MAPSPAM 2020</h3><p>46 ekin bo‘yicha fizik maydon, yig‘im maydoni, ishlab chiqarish va hosildorlikning 2020-yil fazoviy baholari.</p><div class="source-meta"><b>14 viloyat · 199 tuman</b><span>CC BY-SA 4.0</span></div><a href="https://doi.org/10.7910/DVN/SWPENT" target="_blank" rel="noopener">Manba va metodologiya ↗</a></article>
+          <article class="source-card"><div class="source-symbol">⌖</div><span class="source-type">MA’MURIY CHEGARALAR</span><h3>geoBoundaries Uzbekistan</h3><p>Viloyat va tuman poligonlari. Chegara yili, manba va litsenziya qatlam metama’lumotida saqlanadi.</p><div class="source-meta"><b>ADM1 · ADM2</b><span>Attribution required</span></div><a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries ↗</a></article>
+          <article class="source-card"><div class="source-symbol">▤</div><span class="source-type">RASMIY STATISTIKA</span><h3>SIAT · Milliy statistika</h3><p>Viloyat darajasida ekin ishlab chiqarishi va ekilgan maydon nisbatidan hosildorlik qatori. Tuman kesimidagi yield emas.</p><div class="source-meta"><b>2010–2024 · mavjud qatorlar</b><span>CC BY 4.0</span></div><a href="https://siat.stat.uz/" target="_blank" rel="noopener">SIAT ma’lumot portali ↗</a></article>
+          <article class="source-card"><div class="source-symbol">☁</div><span class="source-type">IQLIM VA OB-HAVO</span><h3>Open-Meteo · ERA5-Land</h3><p>Tanlangan hududning vakillik nuqtasi bo‘yicha tarixiy mavsumiy ob-havo va yaqin kunlar prognozi.</p><div class="source-meta"><b>Daily · point lookup</b><span>Open API</span></div><a href="https://open-meteo.com/" target="_blank" rel="noopener">API hujjatlari ↗</a></article>
+        </div>
+        <div class="source-footer"><div><b>OSH AgroAI Uzbekistan</b><span>O‘zbekiston qishloq xo‘jaligi uchun ma’lumotga asoslangan qarorlar.</span></div><div class="footer-links"><a href="https://github.com/Sherzoddd2002/osh-agriculture-uzbekistan" target="_blank" rel="noopener">GitHub ↗</a><a href="https://gov.uz/oz/agro" target="_blank" rel="noopener">Qishloq xo‘jaligi vazirligi ↗</a></div></div>
+      </section>
+    </main>
+    <footer class="page-footer"><span>© 2026 OSH AgroAI Uzbekistan</span><span>Public research demo · Source-first · No fabricated observations</span></footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="./app.js"></script>
+</body>
+</html>
