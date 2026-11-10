@@ -25,6 +25,7 @@ def main() -> int:
         root / "data" / "boundaries" / "UZB_ADM1.geojson",
         root / "data" / "boundaries" / "UZB_ADM2.geojson",
         root / "data" / "mapspam" / "UZB.json.gz",
+        root / "data" / "templates" / "district-yield-template.csv",
     ]
     missing = [str(path.relative_to(root)) for path in required if not path.is_file()]
     if missing:
@@ -39,6 +40,11 @@ def main() -> int:
     for required_marker in ("NO_RASTER_CELLS", "Persistence", "ERA5-Land", "UZB"):
         if required_marker not in js:
             raise SystemExit(f"FAIL app.js missing required marker: {required_marker}")
+
+    template = (root / "data" / "templates" / "district-yield-template.csv").read_text(encoding="utf-8").splitlines()
+    if not template or template[0].strip().lower() != "admin_name,crop_code,year,yield_t_ha":
+        raise SystemExit("FAIL district CSV template columns")
+    print("PASS district CSV template: location and crop provenance columns included")
 
     manifest = read_json(root / "data" / "manifest.json")
     if manifest.get("country_iso3") != "UZB":
