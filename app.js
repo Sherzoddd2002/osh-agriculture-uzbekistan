@@ -449,7 +449,7 @@ async function loadWeather(feature){
 
 function parseCSV(text){
  const lines=String(text).replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
- if(lines.length<9)throw new Error("CSV faylida header va kamida 8 ta kuzatuv bo‘lishi kerak.");
+ if(lines.length<13)throw new Error("CSV faylida header va kamida 12 ta kuzatuv bo‘lishi kerak.");
  const first=lines[0],delimiter=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?";":",";
  function split(line){
   const values=[];let current="",quoted=false;
@@ -481,7 +481,7 @@ function parseCSV(text){
    line:index+2
   };
  }).filter(row=>Number.isInteger(row.year)&&Number.isFinite(row.yield));
- if(parsed.length<8)throw new Error("Kamida 8 ta to‘g‘ri yil/hosildorlik kuzatuvi kerak.");
+ if(parsed.length<12)throw new Error("Kamida 12 ta to‘g‘ri yil/hosildorlik kuzatuvi kerak.");
  const wrongAdmin=parsed.filter(row=>normalize(row.adminName)!==expectedAdmin);
  if(wrongAdmin.length)throw new Error("CSV hududi tanlangan hududga mos emas. Kutilgan: "+featureName(state.selected)+". CSV ichidagi admin_name qiymatini tekshiring.");
  const wrongCrop=parsed.filter(row=>row.cropCode!==expectedCrop);
@@ -538,7 +538,7 @@ function updateForecastAvailability(){
   $("forecast-status").textContent="CSV tanlandi va qamrov tasdiqlandi. Hisoblashdan avval admin_name va crop_code qatorlari solishtiriladi.";
  }else if(isDistrict){
   button.disabled=true;
-  $("forecast-source").textContent="Tuman tanlandi. SIAT ochiq qatorlari viloyat darajasida; aynan shu tuman va ekin uchun kamida 8 yillik haqiqiy CSV kerak.";
+  $("forecast-source").textContent="Tuman tanlandi. SIAT ochiq qatorlari viloyat darajasida; aynan shu tuman va ekin uchun kamida 12 yillik haqiqiy CSV kerak.";
   $("forecast-status").textContent="Tuman uchun CSV yuklang. Viloyat ko‘rsatkichini tuman prognozi sifatida ishlatmaymiz.";
  }else{
   button.disabled=true;
@@ -646,11 +646,11 @@ function makeFeatures(aligned,index){
 }
 function runYieldRidge(series,climate,targetYear){
  const aligned=series.filter(row=>climate[row.year]?.usable).map(row=>({...row,climate:climate[row.year]}));
- if(aligned.length<8)throw new Error("ERA5-Land bilan kamida 8 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+".");
+ if(aligned.length<12)throw new Error("ERA5-Land bilan kamida 12 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+".");
  const x=[],y=[];
  for(let i=3;i<aligned.length;i++){x.push(makeFeatures(aligned,i));y.push(aligned[i].yield);}
  const oof=[];
- for(let i=5;i<aligned.length;i++){
+ for(let i=8;i<aligned.length;i++){
   const trainX=[],trainY=[];
   for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j));trainY.push(aligned[j].yield);}
   const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i),3));
@@ -717,7 +717,7 @@ async function runForecast(){
   if(!series)throw new Error("Tanlangan hudud/ekin uchun rasmiy avtomatik qator yo‘q. CSV yuklang.");
   source="SIAT rasmiy viloyat statistikasi";
  }
- if(series.length<8)throw new Error("Kamida 8 ta yillik kuzatuv kerak.");
+ if(series.length<12)throw new Error("Kamida 12 ta yillik kuzatuv kerak.");
  if(target<=series[series.length-1].year)throw new Error("Maqsadli yil oxirgi kuzatilgan yildan keyin bo‘lishi kerak.");
  const start=$("season-start").value.trim(),end=$("season-end").value.trim();
  const valid=value=>{
@@ -777,7 +777,7 @@ function wireUI(){
   }
  });
  $("yield-csv").addEventListener("change",()=>{
-  $("csv-label").textContent=$("yield-csv").files[0]?.name||"Aynan tanlangan hudud va ekin uchun kamida 8 yillik haqiqiy qator";
+  $("csv-label").textContent=$("yield-csv").files[0]?.name||"Aynan tanlangan hudud va ekin uchun kamida 12 yillik haqiqiy qator";
   updateForecastAvailability();
  });
  $("csv-scope-confirm").addEventListener("change",updateForecastAvailability);
