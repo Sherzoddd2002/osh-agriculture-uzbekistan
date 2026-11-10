@@ -140,6 +140,11 @@ button{cursor:pointer}
 .csv-row .button{min-width:205px;min-height:48px}
 .csv-row .button:disabled{opacity:.48;cursor:not-allowed;transform:none}
 .status-message{margin-top:11px;min-height:20px;font-size:8px;color:#7d8d7e}
+.csv-guidance{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:8px;color:#8d998e}
+.csv-guidance a{color:#548b5e;font-weight:850}
+.csv-scope-confirm{display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:8px;line-height:1.55;color:#738174;cursor:pointer}
+.csv-scope-confirm input{margin:2px 0 0;accent-color:#5c9a67;flex-shrink:0}
+
 .forecast-result{padding:0 24px 22px}
 .forecast-empty{border-top:1px solid #edf1e9;padding:24px 0 8px;text-align:center}
 .forecast-empty>span{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:#f0f6e9;color:#70a879;font-size:21px;margin:0 auto 9px}
