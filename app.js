@@ -108,7 +108,7 @@ function escapeHTML(value){
 }
 function normalize(value){
  return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-  .toLowerCase().replace(/[‘’ʻʼ'\u02bb]/g,"").replace(/\s+/g," ").trim();
+  .toLowerCase().replace(/[а]/g,"a").replace(/[‘’ʻʼ'\u02bb]/g,"").replace(/\s+/g," ").trim();
 }
 function featureId(feature){
  const p=feature?.properties||{};
