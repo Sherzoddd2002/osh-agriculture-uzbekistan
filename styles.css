@@ -91,6 +91,11 @@ button{cursor:pointer}
 .boundary-note b,.boundary-note span,.boundary-note small{display:block}
 .boundary-note b{font-size:9px;color:#4c6251}.boundary-note span{font-size:8px;color:#829185;margin-top:3px}.boundary-note small{font-size:7px;color:#9aa59b;margin-top:4px;line-height:1.45}
 .map-panel{overflow:hidden;display:flex;flex-direction:column;min-height:560px}
+.map-panel.fullscreen{position:fixed;inset:86px 20px 20px;z-index:1300;min-height:0}
+.map-panel.fullscreen #map{height:calc(100vh - 174px);min-height:calc(100vh - 174px)}
+.map-panel.fullscreen .map-toolbar{flex-shrink:0}
+.map-panel.fullscreen .map-footer{flex-shrink:0}
+
 .map-toolbar{height:61px;padding:0 17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
 .map-toolbar b,.map-toolbar small{display:block}.map-toolbar b{font-size:11px}.map-toolbar small{font-size:8px;color:#8a978d;margin-top:3px}
 .map-actions{display:flex;gap:6px}.icon-button{width:30px;height:30px;border-radius:8px;border:1px solid #e2eae0;background:#fbfcf9;color:#5e7963;font-size:16px}
