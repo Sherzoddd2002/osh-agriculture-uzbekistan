@@ -62,3 +62,13 @@ GitHub Actions build jarayoni har bir release uchun:
 - 46 crop qatori, NULL/zero qoidasi va MAPSPAM metadata/litsenziyasini tekshiradi;
 - SIAT qatorlari uchun 13 ta ADM1 nomi, 2010–2024 yillar va manba metadata’larini tekshiradi;
 - Python va JavaScript sintaksisini tekshiradi.
+
+## FAOSTAT QCL — global arxivdan UZB milliy qatori
+
+Global OSH arxiv inventarizatsiyasida FAOSTAT QCL qatori 1961–2024 yillar va 202 ta mamlakat/hudud bo‘yicha mavjud. O‘zbekiston sayti uchun faqat country_iso3=UZB va source_code=FAOSTAT_QCL qatorlari eksport qilinadi. Geografik daraja ADM0 (milliy); bu viloyat yoki tuman hosildorlik statistikasi emas.
+
+UZB repo ichidagi scripts/export_faostat_uzb.py va ops/export-faostat-uzb.ps1 mavjud osh_agriculture_global PostgreSQL bazasidan faqat SELECT bajaradi va data/faostat/UZB_QCL.json yaratadi. GitHub Pages build ushbu JSON'ni site/data/faostat/ ichiga joylaydi. Maxfiy ma’lumotlar yoki global DB dump eksport qilinmaydi.
+
+AI Predict tanlangan viloyat/tuman bo‘yicha avval SIAT rasmiy qatorini afzal ko‘radi. Mos SIAT qatori yo‘q bo‘lsa, FAOSTAT milliy yillik yield nisbatini (har yil / 2020-yil) MAPSPAM 2020 ADM1/ADM2 bazaviy hosildorligiga qo‘llashi mumkin. Bu FAOSTAT milliy trend proksisi deb belgilanadi; u tarixiy tuman kuzatuvi, rasmiy tuman statistikasi yoki mustaqil submilliy validatsiya emas. MAPSPAM 2020 esa alohida bitta spatial baseline, 46 yillik ma’lumot emas.
+
+FAOSTAT qatorlarida bitta normalized crop code bir nechta FAOSTAT item code bilan bog‘liq bo‘lsa, exporter noaniq qatorlarni chiqarib tashlaydi. 12 yillik kuzatuv va 2020 bazasi bo‘lmagan qatorlar modelga kiritilmaydi. Eksport bo‘yicha Windows ko‘rsatmasi README.md ichidagi FAOSTAT global arxivini O‘zbekiston AI Predict'ga ulash bo‘limida.
