@@ -44,6 +44,7 @@ jobs:
         run: |
           python -m py_compile scripts/build_data.py scripts/qa.py scripts/fetch_modis.py scripts/test_modis.py scripts/export_faostat_uzb.py
           node --check site/app.js
+          node scripts/test_climate.js
           python scripts/qa.py --site site
 
       - name: Upload Pages artifact
