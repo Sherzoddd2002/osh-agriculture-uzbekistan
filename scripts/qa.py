@@ -51,6 +51,14 @@ def main() -> int:
     if "OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi" not in js:
         raise SystemExit("FAIL district demo proxy must suppress unvalidated accuracy metrics")
     print("PASS district demo proxy: MAPSPAM 2020 baseline + parent-region SIAT trend; no false OOF accuracy")
+    if "return {lat:center.lat,lng:center.lng}" not in js:
+        raise SystemExit("FAIL selected map center must expose lng for ERA5-Land and NASA POWER")
+    for marker in ("function fetchNasaPowerSolar(", "ALLSKY_SFC_SW_DWN", "power.larc.nasa.gov/api/temporal/daily/point", "nasaSolarUsed"):
+        if marker not in js:
+            raise SystemExit(f"FAIL NASA POWER integration marker missing: {marker}")
+    if "NASA POWER" not in html or "MOD13Q1" not in html:
+        raise SystemExit("FAIL NASA data provenance cards are missing")
+    print("PASS NASA POWER: daily solar radiation feature and source provenance; coordinates aligned")
 
     template = (root / "data" / "templates" / "district-yield-template.csv").read_text(encoding="utf-8").splitlines()
     if not template or template[0].strip().lower() != "admin_name,crop_code,year,yield_t_ha":
