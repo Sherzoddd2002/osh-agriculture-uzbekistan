@@ -23,7 +23,7 @@ Viloyat darajasida SIAT rasmiy qatorlari ishlatiladi. Ayrim tuman/ekin juftlikla
 - MAPSPAM 2020 — tarixiy fazoviy reference; 2026/2027-yil kuzatuvi yoki hosil prognozi emas.
 - SIAT rasmiy avtomatik qatorlari viloyat darajasida; ular tuman ma’lumoti sifatida ishlatilmaydi.
 - FAOSTAT QCL milliy ADM0 qatoridir. U viloyat/tuman kuzatuvi emas. FAOSTAT yillik nisbiy trendi MAPSPAM 2020 fazoviy bazasiga qo‘llansa, natija faqat hududiy proksi bo‘ladi; haqiqiy submilliy tarix yoki mustaqil tasdiqlangan prognoz emas.
-- Tuman uchun AI ssenariysi kamida 12 yillik haqiqiy tuman/ekin hosildorlik CSV va mos ERA5-Land mavsumiy qatori talab qiladi.
+- Tuman uchun AI ssenariysi kamida 12 yillik haqiqiy tuman/ekin hosildorlik CSV va mos tarixiy iqlim qatori talab qiladi. ERA5-Land birlamchi, ERA5 esa zaxira manba; harorat va yog‘in mavsumiy qamrovi kamida 80% bo‘lishi shart. ET₀ yetarli qamrovda bo‘lsagina model belgisi sifatida qo‘shiladi.
 - Prognoz — kelajak ob-havosi uchun tarixiy iqlim normasi ishlatiladigan ssenariy; kafolat yoki kuzatilgan natija emas.
 - MAPSPAM rasterining ekvatordagi nominal aniqligi taxminan 9.3 km; mayda dala chegarasi buni yuqori aniqlikdagi o‘lchovga aylantirmaydi.
 - GitHub Pages statik hosting: foydalanuvchi hisobi, server-side Python, markaziy ma’lumotlar bazasi yoki doimiy foydalanuvchi fayl saqlash bu MVP tarkibiga kirmaydi.
