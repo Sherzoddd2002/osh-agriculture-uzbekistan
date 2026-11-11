@@ -47,6 +47,11 @@ def main() -> int:
         raise SystemExit("FAIL AI model minimum-history or OOF reporting guard")
     if "Kamida 12 ta hosildorlik+iqlim mavsumi" not in html or "kamida 80%" not in html:
         raise SystemExit("FAIL AI Predict page does not disclose the 12-year and 80% climate coverage minimum")
+    for marker in ("3 409 / 9 154", "37,2%", "585", "647", "1992–2024", "22.03.2025–16.10.2025", "DATA AUDIT"):
+        if marker not in html:
+            raise SystemExit(f"FAIL public data coverage panel missing: {marker}")
+    if "FAOSTAT QCL · 1961–2024" in html or "1961–2024 · UZB" in html:
+        raise SystemExit("FAIL Uzbekistan FAOSTAT card must show the exported UZB range, not the global archive range")
     print("PASS AI model: 12-year aligned history, expanding-window OOF and test-count reporting")
     for marker in ("function getDistrictDemoSeries()", "DEMO PROKSI", "demoProxy.baseYield"):
         if marker not in js:
@@ -143,6 +148,27 @@ def main() -> int:
     if district_parents != boundary_id_sets["ADM1"]:
         raise SystemExit("FAIL MAPSPAM ADM2 parent IDs do not match the 14 ADM1 boundary IDs")
 
+    adm2_areas = levels["ADM2"]["areas"]
+    adm2_combinations = sum(len(area.get("crops") or {}) for area in adm2_areas.values())
+    adm2_valid = sum(
+        1 for area in adm2_areas.values()
+        for crop in (area.get("crops") or {}).values()
+        if crop.get("spatial_status") == "ESTIMATED" and crop.get("yield_t_ha") is not None
+    )
+    districts_without_yield = sum(
+        1 for area in adm2_areas.values()
+        if not any(
+            crop.get("spatial_status") == "ESTIMATED" and crop.get("yield_t_ha") is not None
+            for crop in (area.get("crops") or {}).values()
+        )
+    )
+    if (adm2_combinations, adm2_valid, districts_without_yield) != (9154, 3409, 29):
+        raise SystemExit(
+            "FAIL MAPSPAM published coverage changed: "
+            f"combinations={adm2_combinations}, valid={adm2_valid}, "
+            f"districts_without_yield={districts_without_yield}"
+        )
+    print("PASS MAPSPAM ADM2 coverage: 3409/9154 valid district-crop combinations (37.2%); 29 districts have no valid crop raster")
     print("PASS MAPSPAM: UZB · ADM1=14 · ADM2=199 · 46 crops · 2020 reference")
 
     siat = manifest.get("siat") or {}
@@ -210,6 +236,17 @@ def main() -> int:
             raise SystemExit("FAIL FAOSTAT crop_count metadata mismatch")
         if usable_crops == 0:
             raise SystemExit("FAIL FAOSTAT no crop has 12+ rows and a 2020 baseline")
+        if (
+            faostat.get("year_range") != [1992, 2024]
+            or faostat.get("record_count") != 647
+            or len(crops) != 21
+            or total_rows != 647
+            or usable_crops != 20
+        ):
+            raise SystemExit(
+                "FAIL FAOSTAT UZB snapshot: expected 21 crop codes, 647 rows, "
+                "1992–2024 range and 20 usable proxy series"
+            )
         print(f"PASS FAOSTAT: UZB national ADM0 · {len(crops)} crop codes · {total_rows} annual rows · {usable_crops} usable proxy series")
     else:
         print("INFO FAOSTAT: local UZB export not published yet; SIAT and CSV modes remain available")
@@ -252,6 +289,31 @@ def main() -> int:
                     raise SystemExit(f"FAIL MODIS quality fraction out of bounds for {area_id}")
         if not modis.get("quality_policy"):
             raise SystemExit("FAIL MODIS quality policy is missing")
+        observation_dates = sorted({
+            str(row.get("date"))
+            for area in areas.values()
+            for row in (area.get("observations") or [])
+        })
+        total_observations = sum(len(area.get("observations") or []) for area in areas.values())
+        quality_usable = sum(
+            1 for area in areas.values()
+            for row in (area.get("observations") or [])
+            if row.get("quality_usable")
+        )
+        if (
+            observation_dates != [
+                "2025-03-22", "2025-04-07", "2025-04-23", "2025-05-09",
+                "2025-05-25", "2025-06-10", "2025-06-26", "2025-07-12",
+                "2025-07-28", "2025-08-13", "2025-08-29", "2025-09-14",
+                "2025-09-30", "2025-10-16"
+            ]
+            or total_observations != 2786
+            or quality_usable != 2548
+        ):
+            raise SystemExit(
+                "FAIL MODIS snapshot coverage: expected 14 composites, 2786 district rows, "
+                "2548 QA-usable observations"
+            )
         print(f"PASS NASA MODIS: MOD13Q1.061 · {len(areas)} districts · QA-filtered time series")
     else:
         print("INFO NASA MODIS: no extracted zonal data yet; optional loader stays disabled")
