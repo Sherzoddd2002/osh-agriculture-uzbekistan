@@ -666,7 +666,7 @@ function updateForecastAvailability(){
  }else if(isDistrict){
   button.disabled=true;
   $("forecast-source").textContent="Bu tuman/ekin uchun SIAT viloyat trendi yoki mos FAOSTAT milliy trendi + MAPSPAM 2020 bazasi topilmadi. Haqiqiy tuman CSV yuklang.";
-  $("forecast-status").textContent="AI hisoblash uchun kamida 12 yillik mos yield qatori, 2020 bazaviy qiymat va ERA5-Land qamrovi kerak.";
+  $("forecast-status").textContent="AI hisoblash uchun kamida 12 yillik mos yield qatori, 2020 bazaviy qiymat va ERA5-Land/ERA5 tarixiy iqlim qamrovi kerak.";
  }else{
   button.disabled=true;
   $("forecast-source").textContent="Bu viloyat/ekin uchun SIAT qatori yoki mos FAOSTAT milliy trendi + MAPSPAM 2020 bazasi topilmadi. CSV yuklang.";
@@ -911,7 +911,7 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
    '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+' · DEMO PROKSI</b><br>'+
    'Manba: '+escapeHTML(source)+'. 2020-yil tuman MAPSPAM hosildorligi '+fmt(demoProxy.baseYield,2)+' t/ga bazaviy qiymat sifatida olinadi. U ota-hudud — '+escapeHTML(demoProxy.regionName)+' — SIAT qatorining 2020-yilga nisbiy o‘zgarishlari bilan 2010–2024 davriga kengaytiriladi.</div>'+
    '<div class="forecast-benchmark"><b>Talqin cheklovi:</b> 2010–2024 tuman qatori bevosita kuzatilgan statistika emas, balki viloyat trendidan hosil qilingan proksi. Shu sababli OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi. Natija faqat startup namoyishi va model oqimini sinash uchun; tuman darajasidagi rasmiy prognoz yoki mustaqil validatsiya emas.</div>'+
-   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>'+
+   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'. '+climateSourceNote(result)+'</div>'+
    '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
   '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>';
   return;
@@ -943,7 +943,7 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
   '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+'</b><br>'+
   'Manba: '+escapeHTML(source)+' · oxirgi kuzatuv: '+result.lastYear+' yilda '+fmt(result.last,2)+' t/ga. Taxminiy diapazon: '+fmt(lower,2)+'–'+fmt(upper,2)+' t/ga (± OOF MAE). '+
   'Persistence bilan solishtirish: <b>'+(result.beatsPersistence?"OOF MAE undan past":"OOF MAE undan past emas")+'</b>. OOF sinovlari: n='+result.oof.length+' ('+result.oof[0].year+'–'+result.oof[result.oof.length-1].year+'). Iqlim qamrovi: '+fmt(result.coverage*100,1)+'%.</div>'+
-  '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. Bu ssenariy, kafolat emas.</div>'+
+  '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. '+climateSourceNote(result)+' Bu ssenariy, kafolat emas.</div>'+
   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
   '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>'+
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
