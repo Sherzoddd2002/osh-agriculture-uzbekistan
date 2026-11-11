@@ -97,7 +97,7 @@ const SIAT_FILES = {
  cott:"./data/official-yield/UZB_ADM1_COTT_2010_2024.json"
 };
 const state = {
-  adm1:null, adm2:null, mapspam:null, siat:{}, modis:null, nasaPowerCache:new Map(), map:null, boundaryLayer:null,
+  adm1:null, adm2:null, mapspam:null, siat:{}, faostat:null, modis:null, nasaPowerCache:new Map(), map:null, boundaryLayer:null,
   level:"ADM1", selected:null, selectedProvinceId:"", crop:"whea", boundariesReady:false
 };
 
@@ -204,6 +204,28 @@ async function loadMODIS(){
   if(state.selected)renderModisSummary(state.selected);
  }catch(error){state.modis=null;$("modis-state").textContent="KUTILMOQDA";$("modis-state").className="modis-state";$("modis-summary").textContent="NASA MODIS qatlami hali yuklanmagan. Earthdata orqali MOD13Q1 ma’lumotlarini olish talab etiladi.";console.info("NASA MODIS qatlami hozircha yo‘q:",error.message);}
 }
+
+async function loadFAOSTAT(){
+ try{
+  const payload=await fetchJSON("./data/faostat/UZB_QCL.json","FAOSTAT UZB");
+  if(payload.country_iso3!=="UZB"||payload.source_code!=="FAOSTAT_QCL"||!payload.crops||typeof payload.crops!=="object")throw new Error("FAOSTAT paketi UZB/QCL metama’lumotiga mos emas.");
+  const usable=Object.entries(payload.crops).filter(([,item])=>Array.isArray(item.records)&&item.records.some(row=>Number.isInteger(Number(row.year))&&Number(row.year)===2020&&Number(row.yield_t_ha)>0)&&item.records.filter(row=>Number.isInteger(Number(row.year))&&Number(row.yield_t_ha)>0).length>=12);
+  if(!usable.length)throw new Error("2020 bazaviy yili va kamida 12 yillik qatori bor ekin topilmadi.");
+  state.faostat=payload;
+  $("faostat-state").textContent="ULANGAN";
+  $("faostat-state").className="modis-state modis-ok";
+  const first=Number(payload.year_range?.[0]||Math.min(...usable.flatMap(([,item])=>item.records.map(row=>Number(row.year)))));
+  const last=Number(payload.year_range?.[1]||Math.max(...usable.flatMap(([,item])=>item.records.map(row=>Number(row.year)))));
+  $("faostat-summary").textContent=usable.length+" ta ekin kodi uchun O‘zbekiston milliy FAOSTAT QCL qatori yuklandi · "+first+"–"+last+". ADM1/ADM2 prognozi MAPSPAM 2020 bazasiga milliy trendni qo‘llaydi.";
+ }catch(error){
+  state.faostat=null;
+  $("faostat-state").textContent="EXPORT KUTILMOQDA";
+  $("faostat-state").className="modis-state";
+  $("faostat-summary").textContent="Global PostgreSQL arxividan O‘zbekiston FAOSTAT QCL qatorini eksport qiling. Hozircha SIAT mavjud ekinlari ishlaydi. ("+error.message+")";
+  console.info("FAOSTAT milliy qatori hozircha mavjud emas:",error.message);
+ }
+}
+
 function getModisArea(feature){if(!feature||String(feature.properties?.shapeType||"").toUpperCase()!=="ADM2"||!state.modis)return null;return state.modis.areas?.[featureId(feature)]||null;}
 function renderModisSummary(feature){
  if(!feature){$("modis-location").textContent="Hudud tanlanmagan";$("modis-summary").textContent="Tuman tanlanganda NASA NDVI/EVI ko‘rsatkichlari chiqadi.";["modis-ndvi","modis-evi","modis-date","modis-quality"].forEach(id=>$(id).textContent="—");return;}
@@ -576,6 +598,33 @@ function getDistrictDemoSeries(){
  return {series,baseYield:baselineYield,baseYear:2020,regionName:regional.regionName,regionBaseYield:regionBase.yield};
 }
 
+
+function getFAOSTATProxySeries(feature){
+ if(!feature||!state.faostat)return null;
+ const level=String(feature.properties?.shapeType||state.level).toUpperCase();
+ if(level!=="ADM1"&&level!=="ADM2")return null;
+ const spatial=recordForFeature(feature,state.crop,level);
+ const baseline=Number(spatial?.yield_t_ha);
+ if(!Number.isFinite(baseline)||baseline<=0)return null;
+ const crop=state.faostat.crops?.[state.crop];
+ if(!crop||!Array.isArray(crop.records))return null;
+ const records=crop.records.map(row=>({
+  year:Number(row.year),nationalYield:Number(row.yield_t_ha)
+ })).filter(row=>Number.isInteger(row.year)&&row.year>=1961&&row.year<=2024&&Number.isFinite(row.nationalYield)&&row.nationalYield>0).sort((a,b)=>a.year-b.year);
+ const national2020=records.find(row=>row.year===2020);
+ if(!national2020||national2020.nationalYield<=0)return null;
+ const series=records.map(row=>({year:row.year,yield:baseline*(row.nationalYield/national2020.nationalYield)}))
+  .filter(row=>Number.isInteger(row.year)&&Number.isFinite(row.yield)&&row.yield>0);
+ if(series.length<12)return null;
+ return {
+  series,baseYield:baseline,baseYear:2020,countryYield2020:national2020.nationalYield,
+  areaName:featureName(feature),adminLevel:level,cropName:crop.crop_name||state.crop,
+  firstYear:series[0].year,lastYear:series[series.length-1].year,
+  itemCode:crop.item_code||null,sourceRelease:crop.source_release||state.faostat.source_release||null
+ };
+}
+
+
 function updateForecastAvailability(){
  const button=$("run-forecast"),file=$("yield-csv").files[0];
  const autoSeries=getOfficialSeries();
@@ -590,12 +639,9 @@ function updateForecastAvailability(){
  }
  const isDistrict=String(selected.properties?.shapeType||"").toUpperCase()==="ADM2";
  const districtDemo=!file&&isDistrict?getDistrictDemoSeries():null;
+ const nationalProxy=!file&&!autoSeries&&!districtDemo?getFAOSTATProxySeries(selected):null;
  button.innerHTML='AI ssenariysini hisoblash <span>↗</span>';
- if(autoSeries&&!file){
-  button.disabled=false;
-  $("forecast-source").textContent="SIAT rasmiy viloyat qatori tayyor: "+featureName(selected)+" · "+crop?.[1]+" · 2010–2024. CSV shart emas.";
-  $("forecast-status").textContent="Rasmiy SIAT qatori topildi. AI ssenariysini hisoblash mumkin.";
- }else if(file&&!$("csv-scope-confirm").checked){
+ if(file&&!$("csv-scope-confirm").checked){
   button.disabled=true;
   $("forecast-source").textContent="CSV tanlandi, lekin hudud va ekin mosligi tasdiqlanmagan.";
   $("forecast-status").textContent="Davom etishdan oldin CSV aynan "+featureName(selected)+" · "+(crop?.[1]||"tanlangan ekin")+" ma’lumoti ekanini belgilang.";
@@ -603,19 +649,28 @@ function updateForecastAvailability(){
   button.disabled=false;
   $("forecast-source").textContent="Foydalanuvchi CSV qatori tanlangan hudud va ekin metama’lumotlari bilan tekshiriladi. Fayl serverga yuborilmaydi.";
   $("forecast-status").textContent="CSV tanlandi va qamrov tasdiqlandi. Hisoblashdan avval admin_name va crop_code qatorlari solishtiriladi.";
+ }else if(autoSeries){
+  button.disabled=false;
+  $("forecast-source").textContent="SIAT rasmiy viloyat qatori tayyor: "+featureName(selected)+" · "+(crop?.[1]||state.crop)+" · 2010–2024. CSV shart emas.";
+  $("forecast-status").textContent="Rasmiy SIAT qatori topildi. AI ssenariysini hisoblash mumkin.";
  }else if(districtDemo){
   button.disabled=false;
   button.innerHTML='Demo AI ssenariysini hisoblash <span>↗</span>';
-  $("forecast-source").textContent="DEMO PROKSI mavjud: "+featureName(selected)+" · "+(crop?.[1]||state.crop)+". MAPSPAM 2020 tuman bazasi ota-viloyat SIAT 2010–2024 indekslari bilan kengaytiriladi. Bu haqiqiy tuman tarixi emas.";
-  $("forecast-status").textContent="Demo hisoblash mumkin. Natija tuman bo‘yicha mustaqil kuzatuvlar bilan tasdiqlanmagan.";
+  $("forecast-source").textContent="DEMO PROKSI: "+featureName(selected)+" · "+(crop?.[1]||state.crop)+". MAPSPAM 2020 tuman bazasi ota-viloyat SIAT 2010–2024 trendi bilan kengaytiriladi.";
+  $("forecast-status").textContent="Tuman demo hisoblash mumkin. Bu mustaqil tuman kuzatuvi emas.";
+ }else if(nationalProxy){
+  button.disabled=false;
+  button.innerHTML='FAOSTAT trendi bilan AI hisoblash <span>↗</span>';
+  $("forecast-source").textContent="FAOSTAT milliy trend proksisi tayyor: "+featureName(selected)+" · "+(crop?.[1]||state.crop)+" · "+nationalProxy.firstYear+"–"+nationalProxy.lastYear+". MAPSPAM 2020 hududiy bazasi bilan masshtablanadi; bu hududiy kuzatuv emas.";
+  $("forecast-status").textContent="FAOSTAT QCL milliy qatori topildi. AI ssenariysini hisoblash mumkin; natija milliy trend proksisi sifatida belgilanadi.";
  }else if(isDistrict){
   button.disabled=true;
-  $("forecast-source").textContent="Tuman tanlandi. Demo proksi uchun ham MAPSPAM 2020 bazaviy hosildorligi va ota-viloyat SIAT qatori kerak; ulardan biri topilmadi. Haqiqiy tuman CSV yuklang.";
-  $("forecast-status").textContent="Aynan shu tuman va ekin uchun kamida 12 yillik haqiqiy CSV talab qilinadi.";
+  $("forecast-source").textContent="Bu tuman/ekin uchun SIAT viloyat trendi yoki mos FAOSTAT milliy trendi + MAPSPAM 2020 bazasi topilmadi. Haqiqiy tuman CSV yuklang.";
+  $("forecast-status").textContent="AI hisoblash uchun kamida 12 yillik mos yield qatori, 2020 bazaviy qiymat va ERA5-Land qamrovi kerak.";
  }else{
   button.disabled=true;
-  $("forecast-source").textContent="Bu viloyat/ekin uchun avtomatik SIAT qatori topilmadi. Aynan shu hudud va ekinga tegishli CSV yuklang.";
-  $("forecast-status").textContent="CSV talab qilinadi.";
+  $("forecast-source").textContent="Bu viloyat/ekin uchun SIAT qatori yoki mos FAOSTAT milliy trendi + MAPSPAM 2020 bazasi topilmadi. CSV yuklang.";
+  $("forecast-status").textContent="Tanlangan ekin uchun 2020 bazaviy hosildorligi va kamida 12 yillik tarix talab qilinadi.";
  }
 }
 
@@ -766,7 +821,7 @@ function modisPowerNote(result){
  if(result.modisAvailable)return "NASA MODIS qatori topildi, lekin barcha model yillari bilan kamida 3 ta sifatli 16 kunlik kompozit mos kelmadi. Shu sababli model feature’iga qo‘shilmadi.";
  return "NASA MODIS tarixiy qatori tanlangan tumanda hali mavjud emas. Model hozircha ERA5-Land va mavjud NASA POWER belgilaridan foydalanadi.";
 }
-function showForecastResult(result,target,cropName,areaName,source,demoProxy=null){
+function showForecastResult(result,target,cropName,areaName,source,demoProxy=null,nationalProxy=null){
  if(demoProxy){
   $("forecast-result").innerHTML=
    '<div class="forecast-kpis">'+
@@ -780,6 +835,22 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
    '<div class="forecast-benchmark">ERA5-Land mavsumiy iqlim ko‘rsatkichlari modelga qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>'+
    '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
   '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>';
+  return;
+ }
+
+ if(nationalProxy){
+  $("forecast-result").innerHTML=
+   '<div class="forecast-kpis">'+
+    '<div class="forecast-kpi"><small>'+target+' YIL · FAOSTAT TREND AI</small><strong>'+fmt(result.forecast,2)+'</strong><em>tonna / gektar · ssenariy</em></div>'+
+    '<div class="forecast-kpi"><small>MAPSPAM 2020 · HUDUDIY BAZA</small><strong>'+fmt(nationalProxy.baseYield,2)+'</strong><em>t/ga · '+escapeHTML(nationalProxy.adminLevel)+' reference</em></div>'+
+    '<div class="forecast-kpi"><small>FAOSTAT TARIXI</small><strong>'+result.rows+'</strong><em>mos yil · '+nationalProxy.firstYear+'–'+nationalProxy.lastYear+'</em></div>'+
+   '</div>'+
+   '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+' · FAOSTAT MILLIY TREND PROKSISI</b><br>'+
+   'Manba: FAOSTAT QCL O‘zbekiston milliy hosildorlik qatori'+(nationalProxy.itemCode?' · item '+escapeHTML(nationalProxy.itemCode):'')+'. 2020-yil milliy hosildorligi '+fmt(nationalProxy.countryYield2020,3)+' t/ga. Milliy yillik o‘zgarish nisbati '+escapeHTML(String(nationalProxy.firstYear))+'–'+escapeHTML(String(nationalProxy.lastYear))+' qatorida '+escapeHTML(areaName)+'ning MAPSPAM 2020 bazaviy '+fmt(nationalProxy.baseYield,2)+' t/ga qiymatiga qo‘llandi.</div>'+
+   '<div class="forecast-benchmark"><b>Talqin va validatsiya cheklovi:</b> bu '+escapeHTML(nationalProxy.adminLevel)+' darajasidagi mustaqil yillik kuzatuv emas. Tarixiy hududiy hosillar milliy trend bilan masshtablangan proksi hisoblanadi. Shuning uchun OOF MAE, Persistence MAE va aniqlik ko‘rsatkichi hududiy haqiqiy validatsiya sifatida ko‘rsatilmaydi.</div>'+
+   '<div class="forecast-benchmark">ERA5-Land mavsumiy harorat, yog‘in va ET₀ qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos yield+iqlim yillari: '+result.rows+'.</div>'+
+   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
+   '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>';
   return;
  }
  const lower=Math.max(0,result.forecast-result.mae),upper=result.forecast+result.mae;
@@ -799,6 +870,7 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
+
 async function runForecast(){
  const feature=state.selected;
  if(!feature)throw new Error("Avval xaritadan hududni tanlang.");
@@ -806,7 +878,7 @@ async function runForecast(){
  const target=Number($("target-year").value);
  if(!Number.isInteger(target)||target<2026||target>2040)throw new Error("Maqsadli yil 2026–2040 oralig‘ida bo‘lishi kerak.");
  const inputFile=$("yield-csv").files[0];
- let series,source,demoProxy=null;
+ let series,source,demoProxy=null,nationalProxy=null;
  if(inputFile){
   if(!$("csv-scope-confirm").checked)throw new Error("CSV aynan tanlangan hudud va ekin uchun ekanini tasdiqlang.");
   series=parseCSV(await inputFile.text());
@@ -817,7 +889,14 @@ async function runForecast(){
    demoProxy=getDistrictDemoSeries();
    if(demoProxy){series=demoProxy.series;source="DEMO PROKSI: MAPSPAM 2020 tuman bazasi × ota-viloyat SIAT indeksi";}
   }
-  if(!series)throw new Error("Tanlangan hudud/ekin uchun SIAT yoki demo proksi qatori topilmadi. Haqiqiy CSV yuklang.");
+  if(!series){
+   nationalProxy=getFAOSTATProxySeries(feature);
+   if(nationalProxy){
+    series=nationalProxy.series;
+    source="FAOSTAT QCL O‘zbekiston milliy trendi × MAPSPAM 2020 hududiy bazasi";
+   }
+  }
+  if(!series)throw new Error("Tanlangan hudud/ekin uchun SIAT, FAOSTAT milliy trend proksisi yoki CSV qatori topilmadi.");
   if(!source)source="SIAT rasmiy viloyat statistikasi";
  }
  if(series.length<12)throw new Error("Kamida 12 ta yillik kuzatuv kerak.");
@@ -832,14 +911,14 @@ async function runForecast(){
  const center=getSelectedCenter();
  if(!center)throw new Error("Hudud koordinatasi aniqlanmadi.");
  $("run-forecast").disabled=true;
- $("forecast-status").textContent="ERA5-Land mavsumiy qatori olinmoqda. Bu jarayon bir oz vaqt olishi mumkin…";
+ $("forecast-status").textContent="1961–2024 FAOSTAT tarixi uchun ERA5-Land mavsumiy iqlim qatori olinmoqda…";
  try{
   const climate=await fetchClimateSeries(center,series,start,end);
   const modisByYear=getModisSeriesByYear(feature,series,start,end);
   $("forecast-status").textContent="ERA5-Land, NASA POWER va mavjud MODIS qatorlari moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
   const result=runYieldRidge(series,climate,target,modisByYear);
-  showForecastResult(result,target,cropName,featureName(feature),source,demoProxy);
-  $("forecast-status").textContent=(demoProxy?"DEMO PROKSI tayyor · ":"Ssenariy tayyor · ")+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
+  showForecastResult(result,target,cropName,featureName(feature),source,demoProxy,nationalProxy);
+  $("forecast-status").textContent=(demoProxy?"DEMO PROKSI tayyor · ":nationalProxy?"FAOSTAT MILLIY TREND PROKSISI tayyor · ":"Ssenariy tayyor · ")+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
  }finally{
   updateForecastAvailability();
  }
@@ -914,11 +993,18 @@ async function init(){
   renderBoundaryLayer();fitCountry();
   setStatus("14 viloyat va 199 tuman chegaralari yuklandi.");
   await loadMapspam();
+  await loadFAOSTAT();
   $("metric-provinces").textContent="14";$("metric-districts").textContent="199";$("metric-crops").textContent="46";
   setStatus("Hududlar va 2020-yil ekin ma’lumotlari tayyor.");
   setDataHealth("Ma’lumot paketlari tekshirildi · 14 / 199 / 46",true);
   renderBoundaryLayer();updateForecastAvailability();
-  loadSIAT().then(()=>updateForecastAvailability());
+  loadSIAT().then(()=>{
+   if(!state.selected){
+    const initialFeature=(state.adm1?.features||[]).find(feature=>getOfficialSeriesForFeature(feature)?.records?.length>=12);
+    if(initialFeature)selectFeature(initialFeature,false);
+    else updateForecastAvailability();
+   }else updateForecastAvailability();
+  });
   loadMODIS();
   applyLevel();
  }catch(error){
