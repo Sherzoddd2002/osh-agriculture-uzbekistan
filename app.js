@@ -711,7 +711,7 @@ function runYieldRidge(series,climate,targetYear){
  const oof=[];
  for(let i=8;i<aligned.length;i++){
   const trainX=[],trainY=[];
-  for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j));trainY.push(aligned[j].yield);}
+  for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j,useNasaSolar));trainY.push(aligned[j].yield);}
   const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i,useNasaSolar),3));
   const actual=aligned[i].yield,persistence=aligned[i-1].yield;
   oof.push({year:aligned[i].year,actual,prediction,persistence,error:Math.abs(actual-prediction)});
