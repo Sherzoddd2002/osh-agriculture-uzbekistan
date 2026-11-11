@@ -62,9 +62,22 @@ def main() -> int:
     if "NASA POWER" not in html or "MOD13Q1" not in html:
         raise SystemExit("FAIL NASA data provenance cards are missing")
     print("PASS NASA POWER: daily solar radiation feature and source provenance; coordinates aligned")
-    if "trainX.push(makeFeatures(aligned,j,useNasaSolar,useModis))" not in js:
+    if "trainX.push(makeFeatures(aligned,j,useNasaSolar,useModis,useEt0))" not in js:
         raise SystemExit("FAIL OOF training rows must use the same NASA feature schema as validation rows")
     print("PASS Ridge OOF: training and validation feature dimensions match")
+
+    for marker in (
+        "function summarizeClimateSeason(",
+        "function fetchHistoricalDaily(",
+        'for(const model of ["era5_land","era5"])',
+        "if(useEt0)features.push",
+        "ET₀ barcha mos mavsumlarda",
+    ):
+        if marker not in js:
+            raise SystemExit(f"FAIL historical climate robustness marker missing: {marker}")
+    if "ERA5-Land/ERA5 bilan kamida 12 ta mavsum" not in js:
+        raise SystemExit("FAIL climate alignment guard must disclose both primary and fallback sources")
+    print("PASS historical climate: 5-year API chunks, ERA5-Land + ERA5 fallback, ET0 optional, 80% temp/rain gate")
 
     template = (root / "data" / "templates" / "district-yield-template.csv").read_text(encoding="utf-8").splitlines()
     if not template or template[0].strip().lower() != "admin_name,crop_code,year,yield_t_ha":
