@@ -20,7 +20,8 @@ MAPSPAM paketida 213 ta ma’muriy hudud (14 + 199) va 9,798 ta ekin xulosasi ma
 - Viloyat darajasida (ADM1) SIAT’dan ishlab chiqarish / ekilgan maydon nisbati olinadi. Bu t/ekilgan ga ko‘rsatkich; dala o‘lchovi yoki yig‘ib olingan maydonga asoslangan bevosita hosil o‘lchovi deb talqin qilinmaydi.
 - Tuman (ADM2) uchun haqiqiy prognoz rejimida aynan tanlangan tuman va ekinga tegishli kamida 12 yillik CSV kerak. CSV ustunlari: `admin_name,crop_code,year,yield_t_ha`. Dastur `admin_name` va `crop_code` qiymatlarini tanlov bilan solishtiradi.
 - Startup namoyishi uchun ayrim tuman/ekin juftliklarida alohida **demo proksi** ishlaydi: MAPSPAM 2020 tuman hosildorligi bazaviy qiymat bo‘ladi; ota-viloyatning SIAT 2010–2024 hosildorlik qatori 2020-yilga nisbatan o‘zgarish koeffitsienti sifatida qo‘llanadi. Shu orqali 2010–2024 tuman proksi qatori shakllantirilib, ERA5-Land iqlim xususiyatlari bilan Ridge modeliga beriladi.
-- Hosildorlik qatori ERA5-Land mavsumiy harorat, yog‘in va ET₀ bilan moslashtiriladi.
+- Hosildorlik qatori Open-Meteo orqali ERA5-Land mavsumiy harorat, yog‘in va ET₀ bilan moslashtiriladi.
+- NASA POWER Daily Point API’dan `ALLSKY_SFC_SW_DWN` kunlik quyosh radiatsiyasi olinadi. Mavsum bo‘yicha o‘rtacha MJ/m²/kun hisoblanadi va barcha mos hosil yillarida kamida 80% kunlik qamrov mavjud bo‘lsa Ridge modeliga qo‘shimcha feature sifatida kiritiladi. NASA so‘rovi taxminan 0,5° source-grid nuqtasiga yumaloqlanadi va brauzer seansida shu panjara bo‘yicha keshlanadi. NASA API ishlamasa yoki qamrov yetarli bo‘lmasa, model ERA5-Land bilan davom etadi va natijada NASA belgisi ishlatilmagani ko‘rsatiladi.
 - Ridge modelining expanding-window OOF MAE ko‘rsatkichi Persistence (o‘tgan yil hosili) benchmarki bilan solishtiriladi.
 - Kelajakdagi ob-havo noma’lum bo‘lgani sababli target mavsum uchun oxirgi besh mos mavsumning iqlim normasi ishlatiladi. Natija ssenariy, kafolat yoki rasmiy operativ prognoz emas.
 
@@ -32,7 +33,7 @@ Demo proksi haqiqiy tuman yillik kuzatuvi emas: 2010–2024 qiymatlari MAPSPAM 2
 
 O‘zbekiston Qishloq xo‘jaligi vazirligining geoaxborot tizimi rasmiy tavsifida ekin konturlari, dala monitoringi hamda yillar kesimida ekin holati/hosildorlik tarixini yuritish vazifalari keltirilgan. Biroq public, qayta foydalanishga ruxsat etilgan eksport/API endpointi ushbu build jarayonida tasdiqlanmagan. Shuning uchun u hozirgi AI modelga ulanmagan.
 
-Sentinel-2 NDVI rasteri, tuproq va sug‘orish konturining zonal statistikasi ham hozirgi release tarkibida emas. Open-Meteo iqlim qiymatlari tanlangan hududning vakillik nuqtasi bo‘yicha olinadi; butun tuman poligoni bo‘yicha zonal o‘rtacha deb ko‘rsatilmaydi.
+NASA MODIS MOD13Q1 NDVI/EVI (250 m, 16 kunlik) manbasi aniqlangan, ammo hozirgi release’da rasterlar olinmaydi va ADM2 poligonlari bo‘yicha sifat filtri/zonal statistika hisoblanmaydi. Shu sababli u AI modelga ulanmagan. Sentinel-2 NDVI rasteri, tuproq va sug‘orish konturining zonal statistikasi ham hozirgi release tarkibida emas. Open-Meteo iqlim qiymatlari tanlangan hududning vakillik nuqtasi bo‘yicha olinadi; butun tuman poligoni bo‘yicha zonal o‘rtacha deb ko‘rsatilmaydi.
 
 ## Manbalar
 
@@ -42,6 +43,9 @@ Sentinel-2 NDVI rasteri, tuproq va sug‘orish konturining zonal statistikasi ha
 - SIAT bug‘doy ishlab chiqarish: https://siat.stat.uz/data/1458/?lang=en
 - SIAT bug‘doy ekilgan maydoni: https://siat.stat.uz/data/2761/?lang=en
 - Open-Meteo: https://open-meteo.com/
+- NASA POWER Daily API: https://power.larc.nasa.gov/docs/services/api/temporal/daily/
+- NASA POWER foydalanuvchi hamjamiyatlari va manba metodologiyasi: https://power.larc.nasa.gov/docs/methodology/communities/
+- NASA MODIS MOD13Q1 V6.1 (NDVI/EVI): https://doi.org/10.5067/MODIS/MOD13Q1.061
 - Vazirlik agrogeoaxborot tizimi haqida: https://gov.uz/oz/agro/pages/geoaxborot-tizimi
 
 ## Release QA
