@@ -770,11 +770,11 @@ async function fetchClimateSeries(center,series,start,end){
  const nasaPromise=fetchNasaPowerSolar(center,series,start,end).catch(error=>({available:false,error:error.message,byYear:{}}));
  const minYear=Math.min(...series.map(x=>x.year)),maxYear=Math.max(...series.map(x=>x.year));
  const first=seasonForYear(minYear,start,end).start,last=seasonForYear(maxYear,start,end).end;
- const nasa=await nasaPromise;
  const attempts=[],errors=[];
  for(const model of ["era5_land","era5"]){
   try{
-   const byDate=await fetchHistoricalDaily(center,first,last,model),result={};
+   const byDate=await fetchHistoricalDaily(center,first,last,model);
+   const nasa=await nasaPromise,result={};
    for(const row of series){
     const season=seasonForYear(row.year,start,end);
     const climate=summarizeClimateSeason(byDate,season.start,season.end);
@@ -893,7 +893,7 @@ function climateSourceNote(result){
 function nasaPowerNote(result){
  if(result.nasaSolarUsed)return "NASA POWER ulandi: mavsumiy o‘rtacha quyosh radiatsiyasi "+fmt(result.nasaSolarMean,2)+" MJ/m²/kun; mos qator qamrovi "+fmt(result.nasaSolarCoverage*100,1)+"%. Manba panjarasi taxminan 0,5°.";
  if(result.nasaStatus?.available)return "NASA POWER javobi olindi, ammo ayrim mavsumlarda 80% qamrov mezoni to‘lmadi; NASA belgisi modelga kiritilmadi.";
- return "NASA POWER hozircha ulanmagan ("+escapeHTML(result.nasaStatus?.error||"ma’lumot mavjud emas")+"); hisoblash ERA5-Land asosida davom etdi.";
+ return "NASA POWER hozircha ulanmagan ("+escapeHTML(result.nasaStatus?.error||"ma’lumot mavjud emas")+"); asosiy tarixiy iqlim qatori "+escapeHTML(result.climateSource||"ERA5-Land")+" orqali olindi.";
 }
 function modisPowerNote(result){
  if(result.modisUsed)return "NASA MODIS NDVI/EVI modelga qo‘shildi: "+result.modisYears+" ta mos mavsum, sifatli piksel ulushi o‘rtacha "+fmt(result.modisQualityFraction*100,1)+"%.";
@@ -990,11 +990,11 @@ async function runForecast(){
  const center=getSelectedCenter();
  if(!center)throw new Error("Hudud koordinatasi aniqlanmadi.");
  $("run-forecast").disabled=true;
- $("forecast-status").textContent="1961–2024 FAOSTAT tarixi uchun ERA5-Land mavsumiy iqlim qatori olinmoqda…";
+ $("forecast-status").textContent="ERA5-Land tarixiy iqlimi olinmoqda; zarur bo‘lsa ERA5 zaxira manbasi tekshiriladi…";
  try{
   const climate=await fetchClimateSeries(center,series,start,end);
   const modisByYear=getModisSeriesByYear(feature,series,start,end);
-  $("forecast-status").textContent="ERA5-Land, NASA POWER va mavjud MODIS qatorlari moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
+  $("forecast-status").textContent=(climate._source||"Tarixiy iqlim")+" qatori moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
   const result=runYieldRidge(series,climate,target,modisByYear);
   showForecastResult(result,target,cropName,featureName(feature),source,demoProxy,nationalProxy);
   $("forecast-status").textContent=(demoProxy?"DEMO PROKSI tayyor · ":nationalProxy?"FAOSTAT MILLIY TREND PROKSISI tayyor · ":"Ssenariy tayyor · ")+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
