@@ -122,7 +122,7 @@ def main() -> int:
     area_codes: set[str] = set()
 
     for raw in rows:
-        crop_code = str(raw.get("crop_code") or "").strip().lower()
+        crop_code = str(raw.get("crop_code") or "").strip().upper()
         item_code = str(raw.get("item_code") or "").strip()
         try:
             year = int(raw.get("year"))
@@ -235,6 +235,15 @@ def main() -> int:
         for record in crop["records"]
     ]
     valid_count = sum(len(crop["records"]) for crop in crops.values())
+    if not all_years:
+        observed_codes = sorted({str(row.get("crop_code") or "").strip() for row in rows})
+        observed_items = sorted({str(row.get("item_code") or "").strip() for row in rows})
+        raise SystemExit(
+            "FAIL: UZB FAOSTAT satrlari topildi, lekin crop/item mappingdan so‘ng "
+            "yaroqli yield qatori qolmadi. "
+            f"Observed crop_code={observed_codes[:30]}; item_code={observed_items[:30]}. "
+            "SQL natijalari tekshirildi, bo‘sh JSON yaratilmadi."
+        )
     payload = {
         "schema_version": 1,
         "country_iso3": "UZB",
