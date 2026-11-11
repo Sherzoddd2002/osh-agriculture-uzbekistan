@@ -61,3 +61,8 @@ Lokal test:
 python -m http.server 8080
 ```
 So‘ng http://localhost:8080 ni oching. Data paketlari uchun `.github/workflows/pages.yml` dagi build bosqichini bajaring yoki `python scripts/build_data.py --output site/data` buyrug‘ini ishlating.
+
+
+## NASA data qatlamlari
+
+NASA POWER Daily API’dan mavsumiy quyosh radiatsiyasi (`ALLSKY_SFC_SW_DWN`) olinadi va to‘liq qamrov topilganda AI Predict Ridge feature’iga kiritiladi. NASA MODIS MOD13Q1 NDVI/EVI 250 m / 16 kunlik raster qatlami keyingi integratsiyaga rejalashtirilgan; hozircha tuman zonal statistikasiga ulanmagan.
