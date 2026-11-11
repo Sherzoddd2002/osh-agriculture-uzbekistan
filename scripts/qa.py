@@ -45,8 +45,8 @@ def main() -> int:
             raise SystemExit(f"FAIL app.js missing required marker: {required_marker}")
     if "aligned.length<12" not in js or "for(let i=8;i<aligned.length;i++)" not in js or "result.oof.length" not in js:
         raise SystemExit("FAIL AI model minimum-history or OOF reporting guard")
-    if "Kamida 12 ta mos hosildorlik yili" not in html:
-        raise SystemExit("FAIL AI Predict page does not disclose the 12-year minimum")
+    if "Kamida 12 ta hosildorlik+iqlim mavsumi" not in html or "kamida 80%" not in html:
+        raise SystemExit("FAIL AI Predict page does not disclose the 12-year and 80% climate coverage minimum")
     print("PASS AI model: 12-year aligned history, expanding-window OOF and test-count reporting")
     for marker in ("function getDistrictDemoSeries()", "DEMO PROKSI", "demoProxy.baseYield"):
         if marker not in js:
