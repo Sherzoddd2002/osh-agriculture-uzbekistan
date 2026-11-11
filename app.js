@@ -770,11 +770,13 @@ async function fetchClimateSeries(center,series,start,end){
  const nasaPromise=fetchNasaPowerSolar(center,series,start,end).catch(error=>({available:false,error:error.message,byYear:{}}));
  const minYear=Math.min(...series.map(x=>x.year)),maxYear=Math.max(...series.map(x=>x.year));
  const first=seasonForYear(minYear,start,end).start,last=seasonForYear(maxYear,start,end).end;
+ let nasa=null;
  const attempts=[],errors=[];
  for(const model of ["era5_land","era5"]){
   try{
    const byDate=await fetchHistoricalDaily(center,first,last,model);
-   const nasa=await nasaPromise,result={};
+   if(!nasa)nasa=await nasaPromise;
+   const result={};
    for(const row of series){
     const season=seasonForYear(row.year,start,end);
     const climate=summarizeClimateSeason(byDate,season.start,season.end);
@@ -800,7 +802,8 @@ async function fetchClimateSeries(center,series,start,end){
  attempts.sort((a,b)=>b.matched-a.matched);
  const chosen=attempts[0],fallbackReason=chosen.model==="era5"?
   "ERA5-Land qatorida kamida 12 ta mos mavsum topilmadi; to‘liq qamrovli ERA5 zaxira modeli tanlandi.":"";
- chosen.data._nasaStatus={available:Boolean(nasa.available),gridLat:nasa.gridLat??null,gridLon:nasa.gridLon??null,error:nasa.error||null};
+ if(!nasa)nasa=await nasaPromise;
+ chosen.data._nasaStatus={available:Boolean(nasa?.available),gridLat:nasa?.gridLat??null,gridLon:nasa?.gridLon??null,error:nasa?.error||null};
  chosen.data._source=chosen.source;
  chosen.data._model=chosen.model;
  chosen.data._matchedCount=chosen.matched;
