@@ -97,7 +97,7 @@ const SIAT_FILES = {
  cott:"./data/official-yield/UZB_ADM1_COTT_2010_2024.json"
 };
 const state = {
-  adm1:null, adm2:null, mapspam:null, siat:{}, map:null, boundaryLayer:null,
+  adm1:null, adm2:null, mapspam:null, siat:{}, nasaPowerCache:new Map(), map:null, boundaryLayer:null,
   level:"ADM1", selected:null, selectedProvinceId:"", crop:"whea", boundariesReady:false
 };
 
@@ -595,7 +595,34 @@ function seasonForYear(year,start,end){
  };
 }
 function dateKey(date){return date.toISOString().slice(0,10);}
+async function fetchNasaPowerSolar(center,series,start,end){
+ const minYear=Math.min(...series.map(x=>x.year)),maxYear=Math.max(...series.map(x=>x.year));
+ const first=seasonForYear(minYear,start,end).start,last=seasonForYear(maxYear,start,end).end;
+ const startDate=dateKey(first).replace(/-/g,"");
+ const endDate=dateKey(last).replace(/-/g,"");
+ const gridLat=Math.round(Number(center.lat)*2)/2,gridLon=Math.round(Number(center.lng)*2)/2;
+ if(!Number.isFinite(gridLat)||!Number.isFinite(gridLon))throw new Error("NASA POWER koordinatasi noto‘g‘ri.");
+ const cacheKey=[gridLat.toFixed(1),gridLon.toFixed(1),startDate,endDate].join("|");
+ if(state.nasaPowerCache.has(cacheKey))return state.nasaPowerCache.get(cacheKey);
+ const params=new URLSearchParams({parameters:"ALLSKY_SFC_SW_DWN",community:"AG",latitude:gridLat.toFixed(1),longitude:gridLon.toFixed(1),start:startDate,end:endDate,format:"JSON","time-standard":"UTC"});
+ const response=await fetch("https://power.larc.nasa.gov/api/temporal/daily/point?"+params.toString(),{signal:AbortSignal.timeout(60000),headers:{Accept:"application/json"}});
+ if(!response.ok)throw new Error("NASA POWER HTTP "+response.status);
+ const payload=await response.json();
+ const parameters=payload.properties?.parameter||payload.features?.[0]?.properties?.parameter||payload.parameter||{};
+ const radiation=parameters.ALLSKY_SFC_SW_DWN;
+ if(!radiation||typeof radiation!=="object")throw new Error("NASA POWER javobida ALLSKY_SFC_SW_DWN topilmadi.");
+ const daily=new Map(Object.entries(radiation).map(([date,value])=>[date,Number(value)])),byYear={};
+ for(const row of series){
+  const season=seasonForYear(row.year,start,end),values=[],cursor=new Date(season.start);
+  while(cursor<=season.end){const value=daily.get(dateKey(cursor).replace(/-/g,""));if(Number.isFinite(value)&&value>=0)values.push(value);cursor.setUTCDate(cursor.getUTCDate()+1);}
+  const expected=Math.floor((season.end-season.start)/86400000)+1,coverage=expected?values.length/expected:0;
+  byYear[row.year]={usable:coverage>=.8&&values.length>0,coverage,solarMean:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};
+ }
+ const result={available:true,byYear,gridLat,gridLon,cacheKey};
+ state.nasaPowerCache.set(cacheKey,result);return result;
+}
 async function fetchClimateSeries(center,series,start,end){
+ const nasaPromise=fetchNasaPowerSolar(center,series,start,end).catch(error=>({available:false,error:error.message,byYear:{}}));
  const minYear=Math.min(...series.map(x=>x.year)),maxYear=Math.max(...series.map(x=>x.year));
  const first=seasonForYear(minYear,start,end).start,last=seasonForYear(maxYear,start,end).end;
  const params=new URLSearchParams({
@@ -610,6 +637,7 @@ async function fetchClimateSeries(center,series,start,end){
  const dates=daily.time||[],temps=daily.temperature_2m_mean||[],rain=daily.precipitation_sum||[],et0=daily.et0_fao_evapotranspiration||[];
  const byDate=new Map();
  dates.forEach((date,i)=>byDate.set(date,{temp:temps[i],rain:rain[i],et0:et0[i]}));
+ const nasa=await nasaPromise;
  const result={};
  for(const row of series){
   const window=seasonForYear(row.year,start,end);
@@ -620,14 +648,10 @@ async function fetchClimateSeries(center,series,start,end){
   const t=valid("temp"),p=valid("rain"),e=valid("et0");
   const coverage=Math.min(t.length,p.length,e.length)/expected;
   if(coverage<.8||!t.length||!p.length||!e.length){result[row.year]={usable:false,coverage};continue;}
-  result[row.year]={
-   usable:true,coverage,
-   tmean:t.reduce((a,b)=>a+b,0)/t.length,
-   rain:p.reduce((a,b)=>a+b,0),
-   et0:e.reduce((a,b)=>a+b,0),
-   gdd:t.reduce((s,v)=>s+Math.max(0,v-5),0)
-  };
+  const nasaYear=nasa.byYear?.[row.year];
+  result[row.year]={usable:true,coverage,tmean:t.reduce((a,b)=>a+b,0)/t.length,rain:p.reduce((a,b)=>a+b,0),et0:e.reduce((a,b)=>a+b,0),gdd:t.reduce((s,v)=>s+Math.max(0,v-5),0),solarMean:nasaYear?.usable?nasaYear.solarMean:null,nasaSolarCoverage:nasaYear?.coverage||0};
  }
+ result._nasaStatus={available:Boolean(nasa.available),gridLat:nasa.gridLat??null,gridLon:nasa.gridLon??null,error:nasa.error||null};
  return result;
 }
 function solveLinear(matrix,vector){
@@ -670,30 +694,25 @@ function mean(values){return values.reduce((a,b)=>a+b,0)/values.length;}
 function stdev(values){
  const m=mean(values);return Math.sqrt(mean(values.map(v=>Math.pow(v-m,2))));
 }
-function makeFeatures(aligned,index){
+function makeFeatures(aligned,index,useNasaSolar=false){
  const previous=aligned.slice(Math.max(0,index-3),index);
  const climate=aligned.slice(Math.max(0,index-5),index).map(x=>x.climate);
  if(previous.length<3||!climate.length)throw new Error("Model feature qatori yetarli emas.");
- return [
-  aligned[index].year,
-  previous[previous.length-1].yield,
-  mean(previous.map(x=>x.yield)),
-  stdev(previous.map(x=>x.yield)),
-  mean(climate.map(x=>x.tmean)),
-  mean(climate.map(x=>x.rain)),
-  mean(climate.map(x=>x.et0))
- ];
+ const features=[aligned[index].year,previous[previous.length-1].yield,mean(previous.map(x=>x.yield)),stdev(previous.map(x=>x.yield)),mean(climate.map(x=>x.tmean)),mean(climate.map(x=>x.rain)),mean(climate.map(x=>x.et0))];
+ if(useNasaSolar)features.push(mean(climate.map(x=>x.solarMean)));
+ return features;
 }
 function runYieldRidge(series,climate,targetYear){
  const aligned=series.filter(row=>climate[row.year]?.usable).map(row=>({...row,climate:climate[row.year]}));
  if(aligned.length<12)throw new Error("ERA5-Land bilan kamida 12 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+".");
+ const useNasaSolar=aligned.every(row=>Number.isFinite(row.climate.solarMean));
  const x=[],y=[];
- for(let i=3;i<aligned.length;i++){x.push(makeFeatures(aligned,i));y.push(aligned[i].yield);}
+ for(let i=3;i<aligned.length;i++){x.push(makeFeatures(aligned,i,useNasaSolar));y.push(aligned[i].yield);}
  const oof=[];
  for(let i=8;i<aligned.length;i++){
   const trainX=[],trainY=[];
   for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j));trainY.push(aligned[j].yield);}
-  const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i),3));
+  const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i,useNasaSolar),3));
   const actual=aligned[i].yield,persistence=aligned[i-1].yield;
   oof.push({year:aligned[i].year,actual,prediction,persistence,error:Math.abs(actual-prediction)});
  }
@@ -709,6 +728,8 @@ function runYieldRidge(series,climate,targetYear){
   mean(recent.map(x=>x.climate.rain)),
   mean(recent.map(x=>x.climate.et0))
  ];
+ const nasaSolarMean=useNasaSolar?mean(recent.map(x=>x.climate.solarMean)):null;
+ if(useNasaSolar)futureX.push(nasaSolarMean);
  const forecast=Math.max(0,fitRidge(x,y,futureX,3));
  const mae=mean(oof.map(x=>x.error));
  const persistenceMae=mean(oof.map(x=>Math.abs(x.actual-x.persistence)));
@@ -716,14 +737,21 @@ function runYieldRidge(series,climate,targetYear){
   forecast,mae,persistenceMae,beatsPersistence:mae<persistenceMae,
   last:aligned[aligned.length-1].yield,lastYear:aligned[aligned.length-1].year,
   rows:aligned.length,oof,coverage:mean(aligned.map(x=>x.climate.coverage)),
-  climateNormalYears:recent.map(x=>x.year)
+  climateNormalYears:recent.map(x=>x.year),
+  nasaSolarUsed:useNasaSolar,nasaSolarMean,nasaSolarCoverage:mean(aligned.map(x=>x.climate.nasaSolarCoverage||0)),
+  nasaStatus:climate._nasaStatus||{available:false,error:"NASA POWER status mavjud emas"},
  };
 }
 function getSelectedCenter(){
  if(!state.selected)return null;
  const bounds=featureBounds(state.selected);
  if(!bounds||!bounds.isValid())return null;
- const center=bounds.getCenter();return {lat:center.lat,lon:center.lng};
+ const center=bounds.getCenter();return {lat:center.lat,lng:center.lng};
+}
+function nasaPowerNote(result){
+ if(result.nasaSolarUsed)return "NASA POWER ulandi: mavsumiy o‘rtacha quyosh radiatsiyasi "+fmt(result.nasaSolarMean,2)+" MJ/m²/kun; mos qator qamrovi "+fmt(result.nasaSolarCoverage*100,1)+"%. Manba panjarasi taxminan 0,5°.";
+ if(result.nasaStatus?.available)return "NASA POWER javobi olindi, ammo ayrim mavsumlarda 80% qamrov mezoni to‘lmadi; NASA belgisi modelga kiritilmadi.";
+ return "NASA POWER hozircha ulanmagan ("+escapeHTML(result.nasaStatus?.error||"ma’lumot mavjud emas")+"); hisoblash ERA5-Land asosida davom etdi.";
 }
 function showForecastResult(result,target,cropName,areaName,source,demoProxy=null){
  if(demoProxy){
@@ -736,7 +764,8 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
    '<div class="forecast-benchmark"><b>'+escapeHTML(areaName)+' · '+escapeHTML(cropName)+' · DEMO PROKSI</b><br>'+
    'Manba: '+escapeHTML(source)+'. 2020-yil tuman MAPSPAM hosildorligi '+fmt(demoProxy.baseYield,2)+' t/ga bazaviy qiymat sifatida olinadi. U ota-hudud — '+escapeHTML(demoProxy.regionName)+' — SIAT qatorining 2020-yilga nisbiy o‘zgarishlari bilan 2010–2024 davriga kengaytiriladi.</div>'+
    '<div class="forecast-benchmark"><b>Talqin cheklovi:</b> 2010–2024 tuman qatori bevosita kuzatilgan statistika emas, balki viloyat trendidan hosil qilingan proksi. Shu sababli OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi. Natija faqat startup namoyishi va model oqimini sinash uchun; tuman darajasidagi rasmiy prognoz yoki mustaqil validatsiya emas.</div>'+
-   '<div class="forecast-benchmark">ERA5-Land mavsumiy iqlim ko‘rsatkichlari modelga qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>';
+   '<div class="forecast-benchmark">ERA5-Land mavsumiy iqlim ko‘rsatkichlari modelga qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>'+
+   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>';
   return;
  }
  const lower=Math.max(0,result.forecast-result.mae),upper=result.forecast+result.mae;
@@ -751,6 +780,7 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
   'Manba: '+escapeHTML(source)+' · oxirgi kuzatuv: '+result.lastYear+' yilda '+fmt(result.last,2)+' t/ga. Taxminiy diapazon: '+fmt(lower,2)+'–'+fmt(upper,2)+' t/ga (± OOF MAE). '+
   'Persistence bilan solishtirish: <b>'+(result.beatsPersistence?"OOF MAE undan past":"OOF MAE undan past emas")+'</b>. OOF sinovlari: n='+result.oof.length+' ('+result.oof[0].year+'–'+result.oof[result.oof.length-1].year+'). Iqlim qamrovi: '+fmt(result.coverage*100,1)+'%.</div>'+
   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. Bu ssenariy, kafolat emas.</div>'+
+  '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
