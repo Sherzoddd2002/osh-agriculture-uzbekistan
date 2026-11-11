@@ -38,6 +38,7 @@ jobs:
           cp data/templates/district-yield-template.csv site/data/templates/
           cp README.md site/PROJECT-README.md
           if [ -d data/modis ]; then mkdir -p site/data/modis && cp -R data/modis/. site/data/modis/; fi
+          if [ -d data/faostat ]; then mkdir -p site/data/faostat && cp -R data/faostat/. site/data/faostat/; fi
 
       - name: Static code and data QA
         run: |
