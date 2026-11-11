@@ -15,8 +15,24 @@ Viloyat darajasida SIAT rasmiy qatorlari ishlatiladi. Ayrim tuman/ekin juftlikla
 - Tuman/viloyat va ekin bo‘yicha qidirish, xaritada rangli ko‘rsatish va hududiy taqqoslash.
 - Open-Meteo orqali tanlangan hudud markazi uchun ob-havo ma’lumotlari.
 - O‘zbekistonning viloyat darajasidagi SIAT qatorlari mavjud bo‘lgan ekinlar uchun avtomatik AI ssenariysi.
-- Global OSH PostgreSQL arxividan alohida eksport qilingach, FAOSTAT QCL milliy qatori (1961–2024) boshqa ekinlar uchun ham FAOSTAT milliy trendi × MAPSPAM 2020 hududiy bazasi ko‘rinishidagi aniq belgilangan proksi ssenariysini beradi.
+- Global OSH PostgreSQL arxividan alohida eksport qilingach, FAOSTAT QCL O‘zbekiston milliy qatori (1992–2024; 21 kod va 647 yillik yozuv, shundan 20 tasi proksi uchun yaroqli) boshqa ekinlar uchun ham FAOSTAT milliy trendi × MAPSPAM 2020 hududiy bazasi ko‘rinishidagi aniq belgilangan proksi ssenariysini beradi.
 - Tuman/dala prognozi uchun aynan shu hudud va ekinga tegishli tarixiy CSV importi; CSV brauzer ichida qayta ishlanadi.
+
+## Ma’lumot qamrovi — 2026-11-11 build
+
+| Qatlam | Tasdiqlangan qamrov |
+|---|---|
+| Ma’muriy xarita | 14 ta ADM1 va 199 ta ADM2; ADM1 chegara vintage 2017, ADM2 vintage 2020 |
+| MAPSPAM 2020 | 213 hudud × 46 ekin = 9 798 xulosa; ADM2 bo‘yicha 9 154 tuman–ekin kombinatsiyasidan 3 409 tasida (37,2%) yaroqli raster qiymati mavjud |
+| SIAT | Bug‘doy, kartoshka, xom paxta: 13 hudud × 15 yil × 3 ekin = 585 viloyat-yil yozuvi, 2010–2024 |
+| FAOSTAT QCL Uzbekistan | 21 ekin kodi, 647 yillik yozuv, 1992–2024; 20 kod 12+ yil va 2020 bazasi shartiga javob beradi |
+| NASA MODIS | 199 tuman × 14 kompozit oynasi; 2025-03-22–2025-10-16. QA’dan o‘tgan kuzatuvlar soni tumanga qarab farq qiladi |
+| Open-Meteo / ERA5-Land / ERA5 | Joriy/7 kunlik ob-havo va tarixiy iqlim qatorlari API orqali so‘rov paytida olinadi; koordinata vakillik nuqtasidir |
+| NASA POWER | Kunlik quyosh radiatsiyasi API orqali hisoblash paytida olinadi; taxminan 0,5° panjara |
+
+MAPSPAM ADM2 qatlamida 5 745 kombinatsiyada yaroqli raster qiymati yo‘q; 29 tumanda 46 ekinning hech biri uchun yaroqli raster katak topilmagan. Bu holatlar nol hosildorlik deb talqin qilinmaydi. FAOSTAT’dagi soya (soyb) qatori 9 yil bilan cheklangani uchun 20 ta yaroqli proksi seriyasiga kirmaydi.
+
+Ushbu inventarizatsiya 2026-11-11 dagi GitHub Pages build artefaktidan hisoblangan. Tarixiy ERA5/ERA5-Land va NASA POWER qiymatlari statik paketga kiritilmagan; AI hisoblashida API’dan alohida olinadi. Tuman bo‘yicha ob-havo vakillik koordinatasiga tegishli, poligon bo‘yicha zonal o‘rtacha emas.
 
 ## Ilmiy va ma’lumot cheklovlari
 
