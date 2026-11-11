@@ -60,8 +60,10 @@ FAOSTAT_TO_MAPSPAM = {
     "FAO_463": "vege",
     "FAO_486": "bana",
     "FAO_489": "plnt",
+    "FAO_603": "trof",
     "FAO_661": "coco",
     "FAO_667": "teas",
+    "FAO_821": "ofib",
     "FAO_826": "toba",
 }
 
