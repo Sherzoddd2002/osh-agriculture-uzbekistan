@@ -61,7 +61,7 @@ def main() -> int:
     if "NASA POWER" not in html or "MOD13Q1" not in html:
         raise SystemExit("FAIL NASA data provenance cards are missing")
     print("PASS NASA POWER: daily solar radiation feature and source provenance; coordinates aligned")
-    if "trainX.push(makeFeatures(aligned,j,useNasaSolar))" not in js:
+    if "trainX.push(makeFeatures(aligned,j,useNasaSolar,useModis))" not in js:
         raise SystemExit("FAIL OOF training rows must use the same NASA feature schema as validation rows")
     print("PASS Ridge OOF: training and validation feature dimensions match")
 
