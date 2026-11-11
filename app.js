@@ -865,7 +865,8 @@ function runYieldRidge(series,climate,targetYear,modisByYear=null){
  const aligned=series.filter(row=>climate[row.year]?.usable).map(row=>({...row,climate:climate[row.year],modis:modisByYear?.[row.year]||null}));
  if(aligned.length<12){
   const attempts=(climate._attemptCounts||[]).map(x=>x.model+"="+x.matched+"/"+series.length).join(", ");
-  throw new Error("ERA5-Land/ERA5 bilan kamida 12 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+". "+(attempts?"Tekshiruv: "+attempts+".":"")+" Harorat va yog‘in qamrovi kamida 80% bo‘lishi shart.");
+  const failures=(climate._attemptErrors||[]).join(" | ");
+  throw new Error("ERA5-Land/ERA5 bilan kamida 12 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+". "+(attempts?"Tekshiruv: "+attempts+".":"")+(failures?" API tafsiloti: "+failures+".":"")+" Harorat va yog‘in qamrovi kamida 80% bo‘lishi shart.");
  }
  const useEt0=aligned.every(row=>Number.isFinite(row.climate.et0));
  const useNasaSolar=aligned.every(row=>Number.isFinite(row.climate.solarMean));
