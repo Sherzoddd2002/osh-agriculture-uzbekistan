@@ -42,6 +42,8 @@ FAOSTAT_TO_MAPSPAM = {
     "FAO_149": "orts",
     "FAO_156": "sugc",
     "FAO_157": "sugb",
+    "FAO_176": "bean",
+    "FAO_181": "bean",
     "FAO_191": "chic",
     "FAO_195": "cowp",
     "FAO_197": "pige",
@@ -54,17 +56,16 @@ FAOSTAT_TO_MAPSPAM = {
     "FAO_267": "sunf",
     "FAO_270": "rape",
     "FAO_289": "sesa",
+    "FAO_328": "cott",
     "FAO_339": "ooil",
     "FAO_388": "toma",
     "FAO_403": "onio",
     "FAO_463": "vege",
     "FAO_486": "bana",
     "FAO_489": "plnt",
-    "FAO_656": "coff",
     "FAO_661": "coco",
     "FAO_667": "teas",
     "FAO_826": "toba",
-    "FAO_836": "rubb",
 }
 
 
