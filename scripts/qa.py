@@ -201,6 +201,12 @@ def main() -> int:
     else:
         print("INFO FAOSTAT: local UZB export not published yet; SIAT and CSV modes remain available")
 
+    exporter_path = Path("scripts") / "export_faostat_uzb.py"
+    exporter = exporter_path.read_text(encoding="utf-8")
+    if 'strip().upper()' not in exporter or "if not all_years:" not in exporter:
+        raise SystemExit("FAIL FAOSTAT exporter must normalize crop codes case-insensitively and reject empty exports")
+    print("PASS FAOSTAT exporter: uppercase crop crosswalk and empty-export guard")
+
     for marker in ("async function loadFAOSTAT()", "function getFAOSTATProxySeries(", "FAOSTAT MILLIY TREND PROKSISI"):
         if marker not in js:
             raise SystemExit(f"FAIL FAOSTAT integration marker missing: {marker}")
