@@ -41,7 +41,7 @@ jobs:
 
       - name: Static code and data QA
         run: |
-          python -m py_compile scripts/build_data.py scripts/qa.py
+          python -m py_compile scripts/build_data.py scripts/qa.py scripts/fetch_modis.py scripts/test_modis.py
           node --check site/app.js
           python scripts/qa.py --site site
 
