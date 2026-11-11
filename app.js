@@ -1000,8 +1000,11 @@ async function init(){
   renderBoundaryLayer();updateForecastAvailability();
   loadSIAT().then(()=>{
    if(!state.selected){
-    const initialFeature=(state.adm1?.features||[]).find(feature=>getOfficialSeriesForFeature(feature)?.records?.length>=12);
+    const provinces=state.adm1?.features||[];
+    const initialFeature=provinces.find(feature=>getOfficialSeriesForFeature(feature)?.records?.length>=12)
+     ||provinces.find(feature=>getFAOSTATProxySeries(feature));
     if(initialFeature)selectFeature(initialFeature,false);
+    else if(provinces[0])selectFeature(provinces[0],false);
     else updateForecastAvailability();
    }else updateForecastAvailability();
   });
