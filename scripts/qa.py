@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import math
 from pathlib import Path
 
 
@@ -152,6 +153,60 @@ def main() -> int:
             print(f"PASS SIAT {crop}: 13 ADM1 regions; explicitly not district data")
         else:
             print(f"WARN SIAT {crop}: source unavailable; CSV fallback remains enabled")
+
+
+    faostat_path = root / "data" / "faostat" / "UZB_QCL.json"
+    if faostat_path.is_file():
+        faostat = read_json(faostat_path)
+        crops = faostat.get("crops") or {}
+        if (
+            faostat.get("country_iso3") != "UZB"
+            or faostat.get("admin_level") != "ADM0"
+            or faostat.get("source_code") != "FAOSTAT_QCL"
+            or not isinstance(crops, dict)
+            or not crops
+        ):
+            raise SystemExit("FAIL FAOSTAT identity/schema: expected UZB ADM0 FAOSTAT_QCL")
+        usable_crops = 0
+        total_rows = 0
+        for crop_code, crop in crops.items():
+            if not isinstance(crop, dict) or crop.get("crop_code") != crop_code:
+                raise SystemExit(f"FAIL FAOSTAT crop identity: {crop_code}")
+            records = crop.get("records") or []
+            years = []
+            for row in records:
+                try:
+                    year = int(row.get("year"))
+                except (TypeError, ValueError):
+                    raise SystemExit(f"FAIL FAOSTAT invalid year: {crop_code}")
+                value = row.get("yield_t_ha")
+                if (
+                    year < 1961 or year > 2024
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(float(value))
+                    or float(value) <= 0
+                ):
+                    raise SystemExit(f"FAIL FAOSTAT invalid yield/year: {crop_code}/{year}")
+                years.append(year)
+            if years != sorted(set(years)):
+                raise SystemExit(f"FAIL FAOSTAT duplicate/non-monotonic years: {crop_code}")
+            total_rows += len(records)
+            if len(records) >= 12 and 2020 in years:
+                usable_crops += 1
+        if faostat.get("crop_count") != len(crops):
+            raise SystemExit("FAIL FAOSTAT crop_count metadata mismatch")
+        if usable_crops == 0:
+            raise SystemExit("FAIL FAOSTAT no crop has 12+ rows and a 2020 baseline")
+        print(f"PASS FAOSTAT: UZB national ADM0 · {len(crops)} crop codes · {total_rows} annual rows · {usable_crops} usable proxy series")
+    else:
+        print("INFO FAOSTAT: local UZB export not published yet; SIAT and CSV modes remain available")
+
+    for marker in ("async function loadFAOSTAT()", "function getFAOSTATProxySeries(", "FAOSTAT MILLIY TREND PROKSISI"):
+        if marker not in js:
+            raise SystemExit(f"FAIL FAOSTAT integration marker missing: {marker}")
+    if 'id="faostat-state"' not in html or 'id="faostat-summary"' not in html:
+        raise SystemExit("FAIL FAOSTAT status UI is missing")
+    print("PASS FAOSTAT integration: UZB ADM0 national trend is optional and explicitly labelled as proxy")
 
     modis_path = root / "data" / "modis" / "UZB_ADM2_MOD13Q1.json"
     if args.require_modis and not modis_path.is_file():
