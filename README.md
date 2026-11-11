@@ -66,3 +66,8 @@ So‘ng http://localhost:8080 ni oching. Data paketlari uchun `.github/workflows
 ## NASA data qatlamlari
 
 NASA POWER Daily API’dan mavsumiy quyosh radiatsiyasi (`ALLSKY_SFC_SW_DWN`) olinadi va to‘liq qamrov topilganda AI Predict Ridge feature’iga kiritiladi. NASA MODIS MOD13Q1 NDVI/EVI 250 m / 16 kunlik raster qatlami keyingi integratsiyaga rejalashtirilgan; hozircha tuman zonal statistikasiga ulanmagan.
+
+
+## NASA MODIS district zonal statistics
+
+The optional MOD13Q1.061 ingestion workflow uses NASA AppEEARS and Earthdata Login secrets to create quality-screened NDVI/EVI summaries for all 199 Uzbekistan ADM2 districts. Output is stored in `data/modis/UZB_ADM2_MOD13Q1.json`. Add repository Actions secrets `NASA_EARTHDATA_USERNAME` and `NASA_EARTHDATA_PASSWORD`, then run the `NASA MODIS — build district vegetation time series` workflow. Each request is limited to 550 days; run incremental date windows to build a longer history. The model consumes MODIS only when at least 12 yield seasons each have three or more valid 16-day composites.

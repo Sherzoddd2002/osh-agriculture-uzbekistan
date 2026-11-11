@@ -97,7 +97,7 @@ const SIAT_FILES = {
  cott:"./data/official-yield/UZB_ADM1_COTT_2010_2024.json"
 };
 const state = {
-  adm1:null, adm2:null, mapspam:null, siat:{}, nasaPowerCache:new Map(), map:null, boundaryLayer:null,
+  adm1:null, adm2:null, mapspam:null, siat:{}, modis:null, nasaPowerCache:new Map(), map:null, boundaryLayer:null,
   level:"ADM1", selected:null, selectedProvinceId:"", crop:"whea", boundariesReady:false
 };
 
@@ -194,6 +194,37 @@ async function loadSIAT(){
    console.warn("SIAT "+crop+" avtomatik qatori mavjud emas:",error.message);
   }
  }));
+}
+
+async function loadMODIS(){
+ try{
+  const payload=await fetchJSON("./data/modis/UZB_ADM2_MOD13Q1.json","NASA MODIS");
+  if(payload.country_iso3!=="UZB"||payload.admin_level!=="ADM2"||payload.product_id!=="MOD13Q1.061"||!payload.areas||Object.keys(payload.areas).length!==199)throw new Error("MODIS metadata yoki tuman qamrovi mos emas.");
+  state.modis=payload;$("modis-state").textContent="ULANGAN";$("modis-state").className="modis-state modis-ok";
+  if(state.selected)renderModisSummary(state.selected);
+ }catch(error){state.modis=null;$("modis-state").textContent="KUTILMOQDA";$("modis-state").className="modis-state";$("modis-summary").textContent="NASA MODIS qatlami hali yuklanmagan. Earthdata orqali MOD13Q1 ma’lumotlarini olish talab etiladi.";console.info("NASA MODIS qatlami hozircha yo‘q:",error.message);}
+}
+function getModisArea(feature){if(!feature||String(feature.properties?.shapeType||"").toUpperCase()!=="ADM2"||!state.modis)return null;return state.modis.areas?.[featureId(feature)]||null;}
+function renderModisSummary(feature){
+ if(!feature){$("modis-location").textContent="Hudud tanlanmagan";$("modis-summary").textContent="Tuman tanlanganda NASA NDVI/EVI ko‘rsatkichlari chiqadi.";["modis-ndvi","modis-evi","modis-date","modis-quality"].forEach(id=>$(id).textContent="—");return;}
+ $("modis-location").textContent=featureName(feature);
+ if(String(feature.properties?.shapeType||"").toUpperCase()!=="ADM2"){$("modis-summary").textContent="NASA MODIS statistikasi tuman (ADM2) darajasida hisoblanadi. Tuman tanlang.";["modis-ndvi","modis-evi","modis-date","modis-quality"].forEach(id=>$(id).textContent="—");return;}
+ const area=getModisArea(feature),rows=(area?.observations||[]).filter(row=>row.quality_usable&&Number.isFinite(Number(row.ndvi_mean))&&Number.isFinite(Number(row.evi_mean))).sort((a,b)=>a.date.localeCompare(b.date));
+ if(!rows.length){$("modis-summary").textContent="Tanlangan tuman uchun sifat filtri o‘tgan NASA MODIS kuzatuvi topilmadi.";["modis-ndvi","modis-evi","modis-date","modis-quality"].forEach(id=>$(id).textContent="—");return;}
+ const latest=rows[rows.length-1];$("modis-ndvi").textContent=fmt(latest.ndvi_mean,3);$("modis-evi").textContent=fmt(latest.evi_mean,3);$("modis-date").textContent=latest.date;$("modis-quality").textContent=fmt(Number(latest.good_pixel_fraction||0)*100,1)+"%";$("modis-summary").textContent="NASA MOD13Q1.061 · "+rows.length+" ta sifat filtri o‘tgan kompozit · 250 m / 16 kun.";
+}
+function getModisSeriesByYear(feature,series,start,end){
+ const area=getModisArea(feature);if(!area)return null;
+ const observations=(area.observations||[]).filter(row=>row.quality_usable&&Number.isFinite(Number(row.ndvi_mean))&&Number.isFinite(Number(row.evi_mean))&&Number(row.good_pixel_fraction)>=0.2);
+ if(!observations.length)return null;
+ const result={};
+ for(const yieldRow of series){const season=seasonForYear(yieldRow.year,start,end),from=dateKey(season.start),to=dateKey(season.end),matched=observations.filter(row=>row.date>=from&&row.date<=to);if(matched.length<3)continue;result[yieldRow.year]={usable:true,ndviMean:mean(matched.map(row=>Number(row.ndvi_mean))),ndviPeak:Math.max(...matched.map(row=>Number(row.ndvi_p90??row.ndvi_mean))),eviMean:mean(matched.map(row=>Number(row.evi_mean))),eviPeak:Math.max(...matched.map(row=>Number(row.evi_p90??row.evi_mean))),observations:matched.length,qualityFraction:mean(matched.map(row=>Number(row.good_pixel_fraction)||0))};}
+ return Object.keys(result).length?result:null;
+}
+function modisPowerNote(result){
+ if(result.modisUsed)return "NASA MODIS NDVI/EVI modelga qo‘shildi: "+result.modisYears+" ta mos mavsum, sifatli piksel ulushi o‘rtacha "+fmt(result.modisQualityFraction*100,1)+"%.";
+ if(result.modisAvailable)return "NASA MODIS qatori topildi, lekin barcha model yillari bilan kamida 3 ta sifatli 16 kunlik kompozit mos kelmadi. Shu sababli model feature’iga qo‘shilmadi.";
+ return "NASA MODIS tarixiy qatori tanlangan tumanda hali mavjud emas. Model hozircha ERA5-Land va mavjud NASA POWER belgilaridan foydalanadi.";
 }
 
 function colorFor(value,min,max){
@@ -355,6 +386,7 @@ function updateSelection(feature){
   $("crop-ranking").innerHTML='<div class="empty-state">Hududni tanlang.</div>';
   $("detail-source").textContent="Manba: IFPRI MAPSPAM 2020 v2r2 · CC BY-SA 4.0.";
   $("climate-location").textContent="Hudud tanlanmagan";
+  renderModisSummary(null);
   $("forecast-heading").textContent="Avval xaritadan hudud va ekinni tanlang";
   $("forecast-source").textContent="Viloyat darajasida SIAT qatori mavjud ekinlar avtomatik ishlaydi. Tuman uchun CSV kerak.";
   $("weather-temp").textContent="—°";$("weather-label").textContent="Ob-havo ma’lumoti";
@@ -395,6 +427,7 @@ function updateSelection(feature){
  $("detail-source").textContent="IFPRI MAPSPAM 2020 · "+level+" · chegara vintage: "+boundaryYear+" · CC BY-SA 4.0. Grid ~9.3 km (ekvatorda); dala o‘lchovi emas.";
  $("forecast-heading").textContent=name+" · "+(crop?.[1]||state.crop)+" uchun AI ssenariysi";
  $("climate-location").textContent=name;
+ renderModisSummary(feature);
  renderBoundaryLayer();
  updateForecastAvailability();
  loadWeather(feature).catch(error=>{console.warn(error);$("climate-state").textContent="ULANMADI";});
@@ -694,54 +727,29 @@ function mean(values){return values.reduce((a,b)=>a+b,0)/values.length;}
 function stdev(values){
  const m=mean(values);return Math.sqrt(mean(values.map(v=>Math.pow(v-m,2))));
 }
-function makeFeatures(aligned,index,useNasaSolar=false){
- const previous=aligned.slice(Math.max(0,index-3),index);
- const climate=aligned.slice(Math.max(0,index-5),index).map(x=>x.climate);
+function makeFeatures(aligned,index,useNasaSolar=false,useModis=false){
+ const previous=aligned.slice(Math.max(0,index-3),index),climate=aligned.slice(Math.max(0,index-5),index).map(x=>x.climate),vegetation=aligned.slice(Math.max(0,index-5),index).map(x=>x.modis);
  if(previous.length<3||!climate.length)throw new Error("Model feature qatori yetarli emas.");
  const features=[aligned[index].year,previous[previous.length-1].yield,mean(previous.map(x=>x.yield)),stdev(previous.map(x=>x.yield)),mean(climate.map(x=>x.tmean)),mean(climate.map(x=>x.rain)),mean(climate.map(x=>x.et0))];
  if(useNasaSolar)features.push(mean(climate.map(x=>x.solarMean)));
+ if(useModis){features.push(mean(vegetation.map(x=>x.ndviMean)));features.push(mean(vegetation.map(x=>x.ndviPeak)));features.push(mean(vegetation.map(x=>x.eviMean)));features.push(mean(vegetation.map(x=>x.eviPeak)));}
  return features;
 }
-function runYieldRidge(series,climate,targetYear){
- const aligned=series.filter(row=>climate[row.year]?.usable).map(row=>({...row,climate:climate[row.year]}));
+function runYieldRidge(series,climate,targetYear,modisByYear=null){
+ const aligned=series.filter(row=>climate[row.year]?.usable).map(row=>({...row,climate:climate[row.year],modis:modisByYear?.[row.year]||null}));
  if(aligned.length<12)throw new Error("ERA5-Land bilan kamida 12 ta mavsum mos kelishi kerak. Mos qator: "+aligned.length+" / "+series.length+".");
  const useNasaSolar=aligned.every(row=>Number.isFinite(row.climate.solarMean));
- const x=[],y=[];
- for(let i=3;i<aligned.length;i++){x.push(makeFeatures(aligned,i,useNasaSolar));y.push(aligned[i].yield);}
- const oof=[];
- for(let i=8;i<aligned.length;i++){
-  const trainX=[],trainY=[];
-  for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j,useNasaSolar));trainY.push(aligned[j].yield);}
-  const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i,useNasaSolar),3));
-  const actual=aligned[i].yield,persistence=aligned[i-1].yield;
-  oof.push({year:aligned[i].year,actual,prediction,persistence,error:Math.abs(actual-prediction)});
- }
+ const useModis=aligned.every(row=>row.modis?.usable&&Number.isFinite(row.modis.ndviMean)&&Number.isFinite(row.modis.eviMean));
+ const x=[],y=[];for(let i=3;i<aligned.length;i++){x.push(makeFeatures(aligned,i,useNasaSolar,useModis));y.push(aligned[i].yield);}
+ const oof=[];for(let i=8;i<aligned.length;i++){const trainX=[],trainY=[];for(let j=3;j<i;j++){trainX.push(makeFeatures(aligned,j,useNasaSolar,useModis));trainY.push(aligned[j].yield);}const prediction=Math.max(0,fitRidge(trainX,trainY,makeFeatures(aligned,i,useNasaSolar,useModis),3));const actual=aligned[i].yield,persistence=aligned[i-1].yield;oof.push({year:aligned[i].year,actual,prediction,persistence,error:Math.abs(actual-prediction)});}
  if(!oof.length)throw new Error("Expanding-window validatsiya uchun OOF qator hosil bo‘lmadi.");
- const recent=aligned.slice(-5);
- const previous=aligned.slice(-3);
- const futureX=[
-  targetYear,
-  aligned[aligned.length-1].yield,
-  mean(previous.map(x=>x.yield)),
-  stdev(previous.map(x=>x.yield)),
-  mean(recent.map(x=>x.climate.tmean)),
-  mean(recent.map(x=>x.climate.rain)),
-  mean(recent.map(x=>x.climate.et0))
- ];
- const nasaSolarMean=useNasaSolar?mean(recent.map(x=>x.climate.solarMean)):null;
- if(useNasaSolar)futureX.push(nasaSolarMean);
- const forecast=Math.max(0,fitRidge(x,y,futureX,3));
- const mae=mean(oof.map(x=>x.error));
- const persistenceMae=mean(oof.map(x=>Math.abs(x.actual-x.persistence)));
- return {
-  forecast,mae,persistenceMae,beatsPersistence:mae<persistenceMae,
-  last:aligned[aligned.length-1].yield,lastYear:aligned[aligned.length-1].year,
-  rows:aligned.length,oof,coverage:mean(aligned.map(x=>x.climate.coverage)),
-  climateNormalYears:recent.map(x=>x.year),
-  nasaSolarUsed:useNasaSolar,nasaSolarMean,nasaSolarCoverage:mean(aligned.map(x=>x.climate.nasaSolarCoverage||0)),
-  nasaStatus:climate._nasaStatus||{available:false,error:"NASA POWER status mavjud emas"},
- };
+ const recent=aligned.slice(-5),previous=aligned.slice(-3),futureX=[targetYear,aligned[aligned.length-1].yield,mean(previous.map(x=>x.yield)),stdev(previous.map(x=>x.yield)),mean(recent.map(x=>x.climate.tmean)),mean(recent.map(x=>x.climate.rain)),mean(recent.map(x=>x.climate.et0))];
+ const nasaSolarMean=useNasaSolar?mean(recent.map(x=>x.climate.solarMean)):null;if(useNasaSolar)futureX.push(nasaSolarMean);
+ if(useModis){futureX.push(mean(recent.map(x=>x.modis.ndviMean)));futureX.push(mean(recent.map(x=>x.modis.ndviPeak)));futureX.push(mean(recent.map(x=>x.modis.eviMean)));futureX.push(mean(recent.map(x=>x.modis.eviPeak)));}
+ const forecast=Math.max(0,fitRidge(x,y,futureX,3)),mae=mean(oof.map(x=>x.error)),persistenceMae=mean(oof.map(x=>Math.abs(x.actual-x.persistence))),modisYears=aligned.filter(x=>x.modis?.usable).length;
+ return {forecast,mae,persistenceMae,beatsPersistence:mae<persistenceMae,last:aligned[aligned.length-1].yield,lastYear:aligned[aligned.length-1].year,rows:aligned.length,oof,coverage:mean(aligned.map(x=>x.climate.coverage)),climateNormalYears:recent.map(x=>x.year),nasaSolarUsed:useNasaSolar,nasaSolarMean,nasaSolarCoverage:mean(aligned.map(x=>x.climate.nasaSolarCoverage||0)),nasaStatus:climate._nasaStatus||{available:false,error:"NASA POWER status mavjud emas"},modisUsed:useModis,modisAvailable:modisYears>0,modisYears,modisQualityFraction:modisYears?mean(aligned.filter(x=>x.modis?.usable).map(x=>x.modis.qualityFraction)):0};
 }
+
 function getSelectedCenter(){
  if(!state.selected)return null;
  const bounds=featureBounds(state.selected);
@@ -752,6 +760,11 @@ function nasaPowerNote(result){
  if(result.nasaSolarUsed)return "NASA POWER ulandi: mavsumiy o‘rtacha quyosh radiatsiyasi "+fmt(result.nasaSolarMean,2)+" MJ/m²/kun; mos qator qamrovi "+fmt(result.nasaSolarCoverage*100,1)+"%. Manba panjarasi taxminan 0,5°.";
  if(result.nasaStatus?.available)return "NASA POWER javobi olindi, ammo ayrim mavsumlarda 80% qamrov mezoni to‘lmadi; NASA belgisi modelga kiritilmadi.";
  return "NASA POWER hozircha ulanmagan ("+escapeHTML(result.nasaStatus?.error||"ma’lumot mavjud emas")+"); hisoblash ERA5-Land asosida davom etdi.";
+}
+function modisPowerNote(result){
+ if(result.modisUsed)return "NASA MODIS NDVI/EVI modelga qo‘shildi: "+result.modisYears+" ta mos mavsum, sifatli piksel ulushi o‘rtacha "+fmt(result.modisQualityFraction*100,1)+"%.";
+ if(result.modisAvailable)return "NASA MODIS qatori topildi, lekin barcha model yillari bilan kamida 3 ta sifatli 16 kunlik kompozit mos kelmadi. Shu sababli model feature’iga qo‘shilmadi.";
+ return "NASA MODIS tarixiy qatori tanlangan tumanda hali mavjud emas. Model hozircha ERA5-Land va mavjud NASA POWER belgilaridan foydalanadi.";
 }
 function showForecastResult(result,target,cropName,areaName,source,demoProxy=null){
  if(demoProxy){
@@ -765,7 +778,8 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
    'Manba: '+escapeHTML(source)+'. 2020-yil tuman MAPSPAM hosildorligi '+fmt(demoProxy.baseYield,2)+' t/ga bazaviy qiymat sifatida olinadi. U ota-hudud — '+escapeHTML(demoProxy.regionName)+' — SIAT qatorining 2020-yilga nisbiy o‘zgarishlari bilan 2010–2024 davriga kengaytiriladi.</div>'+
    '<div class="forecast-benchmark"><b>Talqin cheklovi:</b> 2010–2024 tuman qatori bevosita kuzatilgan statistika emas, balki viloyat trendidan hosil qilingan proksi. Shu sababli OOF/MAE aniqlik ko‘rsatkichlari va ishonch oralig‘i ko‘rsatilmaydi. Natija faqat startup namoyishi va model oqimini sinash uchun; tuman darajasidagi rasmiy prognoz yoki mustaqil validatsiya emas.</div>'+
    '<div class="forecast-benchmark">ERA5-Land mavsumiy iqlim ko‘rsatkichlari modelga qo‘shildi. Kelajak ob-havosi kuzatilmaganligi sababli '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillar iqlim normasi ishlatildi. Mos kelgan yield+iqlim yillari: '+result.rows+'.</div>'+
-   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>';
+   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
+  '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>';
   return;
  }
  const lower=Math.max(0,result.forecast-result.mae),upper=result.forecast+result.mae;
@@ -781,6 +795,7 @@ function showForecastResult(result,target,cropName,areaName,source,demoProxy=nul
   'Persistence bilan solishtirish: <b>'+(result.beatsPersistence?"OOF MAE undan past":"OOF MAE undan past emas")+'</b>. OOF sinovlari: n='+result.oof.length+' ('+result.oof[0].year+'–'+result.oof[result.oof.length-1].year+'). Iqlim qamrovi: '+fmt(result.coverage*100,1)+'%.</div>'+
   '<div class="forecast-benchmark">Kelajak ob-havosi kuzatilmagan. Model '+result.climateNormalYears[0]+'–'+result.climateNormalYears[result.climateNormalYears.length-1]+' yillardagi mavsumiy iqlim normasi bilan hisoblandi. Bu ssenariy, kafolat emas.</div>'+
   '<div class="forecast-benchmark">'+nasaPowerNote(result)+'</div>'+
+  '<div class="forecast-benchmark">'+modisPowerNote(result)+'</div>'+
   '<table class="forecast-table"><thead><tr><th>Yil</th><th>Haqiqiy</th><th>Ridge</th><th>Persistence</th><th>|Xato|</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 
@@ -820,8 +835,9 @@ async function runForecast(){
  $("forecast-status").textContent="ERA5-Land mavsumiy qatori olinmoqda. Bu jarayon bir oz vaqt olishi mumkin…";
  try{
   const climate=await fetchClimateSeries(center,series,start,end);
-  $("forecast-status").textContent="Iqlim va hosildorlik qatorlari moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
-  const result=runYieldRidge(series,climate,target);
+  const modisByYear=getModisSeriesByYear(feature,series,start,end);
+  $("forecast-status").textContent="ERA5-Land, NASA POWER va mavjud MODIS qatorlari moslandi. Ridge + Persistence validatsiyasi hisoblanmoqda…";
+  const result=runYieldRidge(series,climate,target,modisByYear);
   showForecastResult(result,target,cropName,featureName(feature),source,demoProxy);
   $("forecast-status").textContent=(demoProxy?"DEMO PROKSI tayyor · ":"Ssenariy tayyor · ")+result.rows+" ta mos yield+iqlim yili · CSV serverga yuborilmadi.";
  }finally{
@@ -903,6 +919,7 @@ async function init(){
   setDataHealth("Ma’lumot paketlari tekshirildi · 14 / 199 / 46",true);
   renderBoundaryLayer();updateForecastAvailability();
   loadSIAT().then(()=>updateForecastAvailability());
+  loadMODIS();
   applyLevel();
  }catch(error){
   console.error(error);setDataHealth("Ma’lumot yuklashda xato",false);

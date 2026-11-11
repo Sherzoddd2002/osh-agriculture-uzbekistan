@@ -1,0 +1,89 @@
+name: NASA MODIS — build district vegetation time series
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Boshlanish sanasi (YYYY-MM-DD)"
+        required: true
+        default: "2025-04-01"
+        type: string
+      end_date:
+        description: "Tugash sanasi (YYYY-MM-DD)"
+        required: true
+        default: "2025-10-31"
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: osh-uzbekistan-modis-ingestion
+  cancel-in-progress: false
+
+jobs:
+  ingest-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install geospatial dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests numpy rasterio shapely
+      - name: Build Uzbekistan administrative boundaries
+        run: python scripts/build_data.py --output site/data
+      - name: Extract NASA MOD13Q1 and calculate 199 district statistics
+        env:
+          NASA_EARTHDATA_USERNAME: ${{ secrets.NASA_EARTHDATA_USERNAME }}
+          NASA_EARTHDATA_PASSWORD: ${{ secrets.NASA_EARTHDATA_PASSWORD }}
+        run: |
+          python scripts/fetch_modis.py \
+            --boundaries site/data/boundaries/UZB_ADM2.geojson \
+            --output data/modis/UZB_ADM2_MOD13Q1.json \
+            --start-date "${{ inputs.start_date }}" \
+            --end-date "${{ inputs.end_date }}"
+      - name: Run MODIS unit tests and release QA
+        run: |
+          python -m py_compile scripts/fetch_modis.py scripts/qa.py
+          python -m unittest discover -s scripts -p "test_modis.py" -v
+          node --check app.js
+          mkdir -p site/data/modis site/data/templates
+          cp data/modis/UZB_ADM2_MOD13Q1.json site/data/modis/
+          cp index.html styles.css app.js site/
+          cp data/templates/district-yield-template.csv site/data/templates/
+          cp README.md site/PROJECT-README.md
+          touch site/.nojekyll
+          python scripts/qa.py --site site --require-modis
+      - name: Commit new MODIS zonal time series
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/modis/UZB_ADM2_MOD13Q1.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add NASA MODIS district vegetation observations"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No MODIS data changes to commit."
+          fi
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Deploy updated site
+        id: deployment
+        uses: actions/deploy-pages@v4

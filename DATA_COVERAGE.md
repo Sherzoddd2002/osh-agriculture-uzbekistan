@@ -33,7 +33,13 @@ Demo proksi haqiqiy tuman yillik kuzatuvi emas: 2010–2024 qiymatlari MAPSPAM 2
 
 O‘zbekiston Qishloq xo‘jaligi vazirligining geoaxborot tizimi rasmiy tavsifida ekin konturlari, dala monitoringi hamda yillar kesimida ekin holati/hosildorlik tarixini yuritish vazifalari keltirilgan. Biroq public, qayta foydalanishga ruxsat etilgan eksport/API endpointi ushbu build jarayonida tasdiqlanmagan. Shuning uchun u hozirgi AI modelga ulanmagan.
 
-NASA MODIS MOD13Q1 NDVI/EVI (250 m, 16 kunlik) manbasi aniqlangan, ammo hozirgi release’da rasterlar olinmaydi va ADM2 poligonlari bo‘yicha sifat filtri/zonal statistika hisoblanmaydi. Shu sababli u AI modelga ulanmagan. Sentinel-2 NDVI rasteri, tuproq va sug‘orish konturining zonal statistikasi ham hozirgi release tarkibida emas. Open-Meteo iqlim qiymatlari tanlangan hududning vakillik nuqtasi bo‘yicha olinadi; butun tuman poligoni bo‘yicha zonal o‘rtacha deb ko‘rsatilmaydi.
+NASA MODIS MOD13Q1 NDVI/EVI (250 m, 16 kunlik) uchun AppEEARS zonal-statistika pipeline’i qo‘shildi. Pipeline O‘zbekiston ADM2 chegaralarining soddalashtirilgan union poligonini NASA’ga yuboradi, qaytgan 250 m rastrlarni asl 199 ta tuman geometriyasi bo‘yicha hisoblaydi. NDVI/EVI scale factor 0.0001 qo‘llanadi; VI Quality bitlari orqali bulut, qor, soya, suv va past sifatli piksellar chiqariladi. Tuman/kompozit natijalari `data/modis/UZB_ADM2_MOD13Q1.json` faylida saqlanadi. AI model bu qatlamni faqat kamida 12 ta hosil mavsumi bilan mos va har mavsumda kamida 3 ta sifatli 16 kunlik kompozit bo‘lsa ishlatadi. Sentinel-2 NDVI rasteri, tuproq va sug‘orish konturining zonal statistikasi ham hozirgi release tarkibida emas. Open-Meteo iqlim qiymatlari tanlangan hududning vakillik nuqtasi bo‘yicha olinadi; butun tuman poligoni bo‘yicha zonal o‘rtacha deb ko‘rsatilmaydi.
+
+### NASA MODIS ma’lumotlarini olish
+
+MODIS ma’lumotini olish uchun bepul NASA Earthdata Login hisobidan AppEEARS API tokeni olinadi. Login va parol GitHub Actions Secrets orqali beriladi: `NASA_EARTHDATA_USERNAME` va `NASA_EARTHDATA_PASSWORD`. Maxfiy qiymatlar kodga, commitga yoki brauzerga yozilmaydi. Repozitoriydagi `NASA MODIS — build district vegetation time series` workflow’ini sana oralig‘i bilan qo‘lda ishga tushirish mumkin. AppEEARS bir so‘rovda ko‘pi bilan 550 kun qabul qiladi; 12–15 yillik tarixni bir nechta sana oralig‘ida yuklash kerak.
+
+Sifat filtri VI Quality bitlarida eng yaxshi umumiy sifat (bits 0–1 = 0), VI usefulness ≤ 8, qo‘shni bulut yo‘q, aralash bulut yo‘q, quruqlik, qor yo‘q va soya yo‘q shartlarini qo‘llaydi. Har bir tuman/kompozitda kamida 10 ta sifatli piksel va candidate piksellarning kamida 20% sifatli bo‘lishi talab qilinadi. Bu loyiha ichidagi qat’iy QA siyosati; yaroqsiz qiymatlar NULL bo‘lib qoladi va nolga almashtirilmaydi.
 
 ## Manbalar
 

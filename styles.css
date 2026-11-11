@@ -223,3 +223,11 @@ button{cursor:pointer}
  .source-grid{grid-template-columns:1fr}.source-card{min-height:0}.source-footer{align-items:flex-start;flex-direction:column}.footer-links{gap:15px}
  .page-footer{flex-direction:column;font-size:7px}
 }
+
+/* NASA MODIS vegetation panel */
+.modis-card{margin-top:13px}.modis-card .side-card-head{color:#668e6d}
+.modis-state{font-style:normal;font-size:7px;letter-spacing:.8px;color:#b18c4a}.modis-state.modis-ok{color:#5f9d6c}
+.modis-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:13px 0 2px}
+.modis-metrics>div{padding:8px 10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);border-radius:8px}
+.modis-metrics small,.modis-metrics b{display:block}.modis-metrics small{font-size:7px;color:#9bb29f}
+.modis-metrics b{font-size:12px;margin-top:4px;color:#e3ebdc}

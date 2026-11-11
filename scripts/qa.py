@@ -15,7 +15,9 @@ def read_json(path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--site", type=Path, default=Path("site"))
-    root = parser.parse_args().site.resolve()
+    parser.add_argument("--require-modis", action="store_true")
+    args = parser.parse_args()
+    root = args.site.resolve()
 
     required = [
         root / "index.html",
@@ -150,6 +152,42 @@ def main() -> int:
             print(f"PASS SIAT {crop}: 13 ADM1 regions; explicitly not district data")
         else:
             print(f"WARN SIAT {crop}: source unavailable; CSV fallback remains enabled")
+
+    modis_path = root / "data" / "modis" / "UZB_ADM2_MOD13Q1.json"
+    if args.require_modis and not modis_path.is_file():
+        raise SystemExit("FAIL required NASA MODIS district dataset is missing")
+    if modis_path.is_file():
+        modis = read_json(modis_path)
+        areas = modis.get("areas") or {}
+        if modis.get("country_iso3") != "UZB" or modis.get("admin_level") != "ADM2" or modis.get("product_id") != "MOD13Q1.061":
+            raise SystemExit("FAIL MODIS identity/provenance metadata")
+        if len(areas) != 199:
+            raise SystemExit(f"FAIL MODIS district coverage: expected 199, got {len(areas)}")
+        for area_id, area in areas.items():
+            observations = area.get("observations") or []
+            dates = [row.get("date") for row in observations]
+            if dates != sorted(set(dates)):
+                raise SystemExit(f"FAIL MODIS duplicate/non-monotonic dates for {area_id}")
+            for row in observations:
+                for metric in ("ndvi_mean", "evi_mean", "good_pixel_fraction"):
+                    value = row.get(metric)
+                    if value is not None and not isinstance(value, (int, float)):
+                        raise SystemExit(f"FAIL MODIS non-numeric {metric} for {area_id}")
+                fraction = row.get("good_pixel_fraction")
+                if fraction is not None and not 0 <= fraction <= 1:
+                    raise SystemExit(f"FAIL MODIS quality fraction out of bounds for {area_id}")
+        if not modis.get("quality_policy"):
+            raise SystemExit("FAIL MODIS quality policy is missing")
+        print(f"PASS NASA MODIS: MOD13Q1.061 · {len(areas)} districts · QA-filtered time series")
+    else:
+        print("INFO NASA MODIS: no extracted zonal data yet; optional loader stays disabled")
+
+    for marker in ("function getModisSeriesByYear(", "function fetchNasaPowerSolar(", "modisUsed"):
+        if marker not in js:
+            raise SystemExit(f"FAIL JS data integration marker missing: {marker}")
+    if 'id="modis-state"' not in html or "MODIS MOD13Q1" not in html:
+        raise SystemExit("FAIL NASA MODIS UI/source provenance is missing")
+    print("PASS NASA MODIS UI: district vegetation panel and optional model features")
 
     print("PASS OSH AgroAI Uzbekistan static release QA")
     return 0
