@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10251d">
+<meta name="description" content="OSH AgroAI Uzbekistan — missiya hujjati: O‘zbekiston qishloq xo‘jaligi uchun dalilga asoslangan agrar intelligence platformasi.">
+<title>OSH AgroAI Uzbekistan — Missiya</title>
+<style>
+:root{
+  --forest:#10251d;--forest-2:#19382b;--forest-3:#28533f;
+  --ink:#18251e;--muted:#6b7a70;--paper:#f4f6f1;--panel:#ffffff;--line:#e3e9df;
+  --mint:#bce8c7;--lime:#d5ef9d;--gold:#c9a25c;--green:#4d9462;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:15px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p{margin:0}
+a{color:inherit;text-decoration:none}
+
+/* ---------- chrome ---------- */
+.topbar{
+  position:fixed;inset:0 0 auto 0;height:64px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,4vw,54px);
+  background:rgba(244,246,241,.86);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:750;letter-spacing:-.3px}
+.brand i{
+  width:30px;height:30px;border-radius:9px;background:var(--forest);color:var(--lime);
+  display:grid;place-items:center;font:700 19px/1 Georgia,serif;font-style:normal;
+}
+.brand em{color:var(--green);font-style:normal}
+.brand small{
+  display:block;font-size:7.5px;letter-spacing:2px;color:#93a096;font-weight:800;margin-top:2px;
+}
+.nav{display:flex;gap:24px;align-items:center}
+.nav a{font-size:11.5px;font-weight:700;color:#78857b}
+.nav a:hover{color:var(--forest)}
+.counter{font:600 11px/1 ui-monospace,"SF Mono",Menlo,monospace;color:#8a968c;letter-spacing:1px}
+.counter b{color:var(--forest)}
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--green);transition:width .25s}
+
+/* ---------- slides ---------- */
+.slide{
+  position:relative;min-height:100vh;padding:104px clamp(18px,5vw,72px) 64px;
+  display:flex;align-items:center;scroll-snap-align:start;
+}
+.slide+.slide{border-top:1px solid var(--line)}
+.wrap{width:100%;max-width:1120px;margin:0 auto}
+.no{
+  position:absolute;right:clamp(16px,4vw,54px);bottom:24px;
+  font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:2px;color:#a9b5ab;
+}
+.kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:9px;font-weight:900;letter-spacing:2.1px;color:var(--green);text-transform:uppercase;
+}
+.kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+h2{font-size:clamp(26px,3.2vw,40px);line-height:1.12;letter-spacing:-1.3px;font-weight:730;margin:18px 0 12px;max-width:20ch}
+.lead{color:var(--muted);font-size:15px;max-width:64ch}
+.split{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(24px,4vw,56px);align-items:start}
+
+/* ---------- cover ---------- */
+.cover{background:var(--forest);color:#f2f7ef;border:0;padding-top:64px}
+.cover:before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 80% 30%,rgba(96,164,112,.22),transparent 46%),
+    radial-gradient(ellipse at 10% 90%,rgba(120,181,120,.10),transparent 40%),
+    linear-gradient(115deg,transparent 42%,rgba(255,255,255,.02) 42.1%,transparent 42.4%);
+  pointer-events:none;
+}
+.cover .wrap{position:relative}
+.cover .kicker{color:#9ec9a5}
+.cover .kicker:before{background:var(--lime);box-shadow:0 0 14px #a5d9a7}
+.cover h1{
+  font-size:clamp(38px,6.2vw,76px);line-height:.98;letter-spacing:-3.4px;font-weight:730;
+  margin:22px 0 22px;max-width:16ch;
+}
+.cover h1 span{color:var(--lime)}
+.cover .lead{color:#b9cdbd;font-size:16px;line-height:1.8;max-width:52ch}
+.cover-meta{
+  display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:36px;
+  font-size:10px;letter-spacing:1.6px;font-weight:800;color:#8fae98;text-transform:uppercase;
+}
+.cover-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.btn{
+  min-height:44px;padding:0 20px;border-radius:9px;display:inline-flex;align-items:center;gap:12px;
+  font-size:11.5px;font-weight:800;border:1px solid transparent;transition:.18s;
+}
+.btn-main{background:var(--lime);color:#193326}
+.btn-main:hover{background:#e7f7c6}
+.btn-ghost{color:#eaf5ea;border-color:#43604f;background:rgba(255,255,255,.03)}
+.btn-ghost:hover{background:rgba(255,255,255,.09)}
+
+/* ---------- cards ---------- */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:34px}
+.grid-4{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:34px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:34px}
+.grid-6{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;box-shadow:0 10px 30px rgba(27,48,35,.045);
+}
+.card h3{font-size:14px;font-weight:770;letter-spacing:-.2px;margin:10px 0 7px}
+.card p{font-size:12.5px;color:var(--muted);line-height:1.68}
+.card .tag{
+  font-size:8.5px;letter-spacing:1.8px;font-weight:900;color:#94a29a;text-transform:uppercase;
+  display:block;
+}
+.num{
+  font:700 13px/1 Georgia,serif;color:var(--green);letter-spacing:.5px;
+  display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#eef5ea;
+}
+.step-line{display:flex;align-items:center;gap:8px;margin-top:10px;color:#b7c5ba;font-size:15px}
+
+/* ---------- pipeline ---------- */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:34px}
+.pipe .card{position:relative;padding-top:20px}
+.pipe .card:after{
+  content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);
+  color:#b9c8be;font-size:15px;z-index:2;background:var(--paper);padding:0 2px;
+}
+.pipe .card:last-child:after{display:none}
+.pipe b{display:block;font-size:12px;letter-spacing:-.1px;margin-bottom:6px}
+.pipe small{font-size:11px;color:var(--muted);line-height:1.6;display:block}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:32px}
+.stat{background:var(--panel);padding:20px 18px}
+.stat strong{display:block;font:700 clamp(22px,2.4vw,30px)/1 Georgia,serif;letter-spacing:-1px;color:var(--forest)}
+.stat small{display:block;font-size:10.5px;color:var(--muted);margin-top:9px;line-height:1.5}
+
+/* ---------- lists ---------- */
+ul.checks{list-style:none;padding:0;margin:14px 0 0}
+ul.checks li{position:relative;padding-left:22px;font-size:12.5px;color:#3d4c42;margin-bottom:9px;line-height:1.6}
+ul.checks li:before{content:"✓";position:absolute;left:0;top:0;color:var(--green);font-weight:900;font-size:11px}
+ul.checks.next li:before{content:"→";color:#b3a06f}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.panel h3{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:#8b988f;font-weight:900;margin-bottom:4px}
+
+/* ---------- note strip ---------- */
+.note{
+  margin-top:30px;padding:16px 20px;border-radius:12px;
+  background:#eef5ea;border:1px solid #dbe8d6;font-size:12.5px;color:#42513f;line-height:1.7;
+}
+.note b{color:var(--forest)}
+.note.dark{background:var(--forest);border-color:var(--forest-2);color:#c6d8c9}
+.note.dark b{color:var(--lime)}
+
+/* ---------- timeline ---------- */
+.track{position:relative;margin-top:46px;padding-top:2px}
+.track:before{content:"";position:absolute;left:0;right:0;top:8px;height:2px;background:linear-gradient(90deg,#cfe0cb,#c9a25c)}
+.months{display:flex;justify-content:space-between;font:600 9.5px/1 ui-monospace,Menlo,monospace;color:#9aa79d;letter-spacing:1px;margin-bottom:8px}
+.tl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.ph{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;position:relative}
+.ph:before{content:"";position:absolute;top:-8px;left:22px;width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid var(--green)}
+.ph:nth-child(2):before{border-color:#8bb894}
+.ph:nth-child(3):before{border-color:var(--gold)}
+.ph span{font:600 9.5px/1 ui-monospace,Menlo,monospace;letter-spacing:1.4px;color:#9aa79d}
+.ph h3{font-size:13.5px;margin:8px 0 6px;font-weight:770}
+.ph p{font-size:12px;color:var(--muted);line-height:1.65}
+
+/* ---------- sources ---------- */
+.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+.src{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.src span{font-size:8.5px;letter-spacing:1.7px;font-weight:900;color:#95a39a;text-transform:uppercase}
+.src b{display:block;font-size:12.5px;margin:7px 0 5px}
+.src small{font-size:11px;color:var(--muted);line-height:1.6}
+
+footer.deck-foot{
+  background:var(--forest);color:#a8c0ae;padding:38px clamp(18px,5vw,72px);
+  font-size:11.5px;line-height:1.8;
+}
+footer.deck-foot b{color:#eaf5ea}
+.foot-links{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:10.5px;letter-spacing:1.2px;font-weight:800;text-transform:uppercase;color:#9ec9a5}
+
+/* ---------- responsive ---------- */
+@media(max-width:980px){
+  .split{grid-template-columns:1fr}
+  .grid-3,.grid-4,.grid-6,.pipe,.stats,.tl-grid,.src-grid{grid-template-columns:1fr 1fr}
+  .pipe .card:after{display:none}
+  .nav{display:none}
+}
+@media(max-width:640px){
+  .slide{padding:88px 18px 56px;min-height:auto}
+  .grid-3,.grid-4,.grid-6,.pipe,.stats,.tl-grid,.src-grid{grid-template-columns:1fr}
+  h2{max-width:none}
+  .cover{min-height:100vh}
+}
+
+/* ---------- print ---------- */
+@media print{
+  body{background:#fff}
+  .topbar,.no{display:none}
+  .slide{min-height:auto;page-break-after:always;padding:24mm 18mm;border:0}
+  .cover{background:var(--forest)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <i>O</i>
+    <div>OSH <em>AgroAI</em><small>UZBEKISTAN · MISSIYA</small></div>
+  </div>
+  <nav class="nav">
+    <a href="#missiya">Missiya</a>
+    <a href="#yechim">Yechim</a>
+    <a href="#foyda">Foydalilik</a>
+    <a href="#pilot">Pilot</a>
+    <a href="#manbalar">Manbalar</a>
+  </nav>
+  <div class="counter"><b id="cur">01</b> / 12</div>
+  <div class="progress" id="bar"></div>
+</header>
+
+<!-- 01 COVER -->
+<section class="slide cover" id="top">
+  <div class="wrap">
+    <div class="kicker">Milliy agrar intelligence platformasi</div>
+    <h1>Har bir gektar uchun<br><span>dalil.</span></h1>
+    <p class="lead">Yer, iqlim va hosildorlik ma’lumotlarini yagona, tekshiriladigan qaror qatlamiga aylantiramiz — fermer, hudud va davlat rejalashtirishi uchun.</p>
+    <div class="cover-actions">
+      <a class="btn btn-main" href="#missiya">Missiya bilan tanishish <span>→</span></a>
+      <a class="btn btn-ghost" href="https://sherzoddd2002.github.io/osh-agriculture-uzbekistan/">Platformani ochish <span>↗</span></a>
+    </div>
+    <div class="cover-meta">
+      <span>O‘zbekiston · 2026</span>
+      <span>14 viloyat · 199 tuman</span>
+      <span>Manba ko‘rsatilgan ma’lumot</span>
+    </div>
+  </div>
+  <span class="no">01</span>
+</section>
+
+<!-- 02 MISSIYA -->
+<section class="slide" id="missiya">
+  <div class="wrap">
+    <div class="kicker">01 · Milliy maqsad</div>
+    <h2>Bir savolga javob: qayerda, nima ekish foydali?</h2>
+    <p class="lead">Maqsad — tarqoq ma’lumotlarni yagona, tekshiriladigan va amaliy qaror beradigan tizimga aylantirish. O‘zbekistonning har bir hududida qaysi ekin qancha hosil berishi va buning uchun qancha suv hamda resurs kerakligini dalillar bilan baholaymiz.</p>
+
+    <div class="grid-3">
+      <article class="card">
+        <span class="num">01</span>
+        <h3>Kuzatish</h3>
+        <p>Yer va ekin maydonlari, suv, iqlim va vegetatsiyani yagona qatlamga yig‘amiz. Har bir ko‘rsatkich manbasi va davri bilan birga saqlanadi.</p>
+      </article>
+      <article class="card">
+        <span class="num">02</span>
+        <h3>Bashorat</h3>
+        <p>Hosildorlik, qurg‘oqchilik va suvga bo‘lgan ehtiyoj bo‘yicha tekshiriladigan ssenariylar tuzamiz — kafolat emas, dalilga asoslangan baho.</p>
+      </article>
+      <article class="card">
+        <span class="num">03</span>
+        <h3>Qaror</h3>
+        <p>Fermer, hududiy boshqaruv va davlat rejalashtirishiga aniqroq axborot beramiz: qaysi ekin, qaysi muddat, qancha resurs.</p>
+      </article>
+    </div>
+
+    <div class="note"><b>Uzoq muddatli natija:</b> hosil va resurslar bo‘yicha milliy dalillar bazasi hamda barqaror agroiqtisodiy rejalashtirish uchun ishonchli asos.</div>
+  </div>
+  <span class="no">02</span>
+</section>
+
+<!-- 03 MUAMMO -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">02 · Muammo</div>
+    <h2>Agrar qarorlar uchun yagona manzara yetishmaydi</h2>
+    <p class="lead">Ma’lumotlar turli tashkilot, format va davrlarda saqlanadi; dala darajasidagi kuzatuvlar bilan bog‘lanishi sust. Natijada bir xil savolga turli javoblar olinadi.</p>
+
+    <div class="grid-4">
+      <article class="card"><span class="tag">Hosil noaniqligi</span><p>Hudud va ekin bo‘yicha hosilni oldindan baholash uchun bir xil standartdagi tarixiy qator yetishmaydi.</p></article>
+      <article class="card"><span class="tag">Suv va iqlim xavfi</span><p>Qurg‘oqchilik, issiq to‘lqinlar, yog‘in va sug‘orish bosimi birgalikda kuzatilmasa, xavf kech aniqlanadi.</p></article>
+      <article class="card"><span class="tag">Tuproq ko‘rinmasligi</span><p>pH, sho‘rlanish, organik modda va oziqa elementlari bo‘yicha dala tahlillari uzluksiz xaritaga aylanmagan.</p></article>
+      <article class="card"><span class="tag">Rejalashtirish bo‘shlig‘i</span><p>Davlat, fermer, bank va sug‘urta uchun yagona, hududiy va vaqt bo‘yicha mos ma’lumot qatlami kam.</p></article>
+    </div>
+
+    <div class="note">Natija: qarorlar kechikadi, resurslar samarasiz sarflanadi va hosil yo‘qotish xavfi ortadi. Aynan shu bo‘shliqni yopish — platformaning asosiy vazifasi.</div>
+  </div>
+  <span class="no">03</span>
+</section>
+
+<!-- 04 YECHIM -->
+<section class="slide" id="yechim">
+  <div class="wrap">
+    <div class="kicker">03 · Yechim</div>
+    <h2>Ma’lumotdan qarorgacha — bitta tizim</h2>
+    <p class="lead">Bir manba yetarli emas: mustaqil manbalarni hudud, ekin va mavsum bo‘yicha moslashtiramiz. Har bir natija qaysi manbadan kelgani va qanchalik ishonchli ekani bilan birga ko‘rsatiladi.</p>
+
+    <div class="pipe">
+      <div class="card"><b>Ma’lumotlar</b><small>Statistika · Sun’iy yo‘ldosh · Iqlim · Tuproq · Dala o‘lchovlari</small></div>
+      <div class="card"><b>Hududiy raqamlashtirish</b><small>GIS poligonlar · Ekin konturlari · Tuman / dala · Vaqt qatori</small></div>
+      <div class="card"><b>Analitika va AI</b><small>Hosildorlik modeli · Suv stressi · Qurg‘oqchilik · Xavf indikatorlari</small></div>
+      <div class="card"><b>Qaror va xizmat</b><small>Fermer tavsiyasi · Tuman monitoringi · Davlat rejalashtirishi · API</small></div>
+    </div>
+
+    <div class="note dark"><b>Har bir natijada:</b> manba · davr · hududiy aniqlik · qamrov · noaniqlik · validatsiya holati. Bu shaffoflik qoidasi butun tizimning asosi.</div>
+  </div>
+  <span class="no">04</span>
+</section>
+
+<!-- 05 BUGUNGI HOLAT -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">04 · Bugungi holat</div>
+    <h2>Poydevor tayyor: ma’lumot qatlamlari ishlaydi</h2>
+    <p class="lead">Hozirgi platforma — ma’lumot qatlamlarini namoyish qiluvchi va model oqimini sinovdan o‘tkazuvchi ishlaydigan MVP. Har bir raqam ochiq manbadan hisoblangan.</p>
+
+    <div class="stats">
+      <div class="stat"><strong>14</strong><small>Viloyat chegarasi (ADM1)</small></div>
+      <div class="stat"><strong>199</strong><small>Tuman va shahar (ADM2)</small></div>
+      <div class="stat"><strong>46</strong><small>MAPSPAM 2020 ekin qatlami</small></div>
+      <div class="stat"><strong>647</strong><small>FAOSTAT milliy yozuv, 1992–2024</small></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Hozir mavjud</h3>
+        <ul class="checks">
+          <li>14 viloyat va 199 tuman chegaralari</li>
+          <li>MAPSPAM 2020: 46 ekin qatlamlari</li>
+          <li>SIAT: 2010–2024, viloyat statistikasi (585 qator)</li>
+          <li>FAOSTAT: O‘zbekiston milliy qatori, 1992–2024</li>
+          <li>ERA5-Land / ERA5 tarixiy iqlim so‘rovi</li>
+          <li>NASA POWER quyosh radiatsiyasi</li>
+          <li>NASA MODIS: 2025-yil vegetatsiya kompozitlari</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Keyingi bosqich</h3>
+        <ul class="checks next">
+          <li>Dala darajasida hosil o‘lchovlari</li>
+          <li>Laboratoriya tuproq tahlillari</li>
+          <li>Sho‘rlanish va tuproq namligi monitoringi</li>
+          <li>NASA SMAP va ERA5-Land tuproq namligi integratsiyasi</li>
+          <li>12+ yillik sun’iy yo‘ldosh time-series</li>
+          <li>Mustaqil hold-out validatsiya</li>
+          <li>Rasmiy tuman statistikasi bilan hamkorlik</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note"><b>Aniq chegara:</b> xaritada ko‘rinish — bu avtomatik ravishda dala o‘lchovi yoki rasmiy tuman statistikasi degani emas. Har bir qatlam shu farqni ochiq aytadi.</div>
+  </div>
+  <span class="no">05</span>
+</section>
+
+<!-- 06 METODOLOGIYA -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">05 · Metodologiya</div>
+    <h2>Model qanday ishlaydi va nimaga tayanadi</h2>
+    <p class="lead">Asosiy shart — ekin mavsumi sanalari va hosil yili bir xil ta’riflanishi. Shundan keyingina iqlim va hosil ma’lumoti bir-biriga bog‘lanadi.</p>
+
+    <div class="track">
+      <div class="months"><span>Okt</span><span>Dek</span><span>Fev</span><span>Apr</span><span>Iyun</span></div>
+    </div>
+
+    <div class="grid-3">
+      <article class="card">
+        <span class="num">1</span>
+        <h3>Hosil belgisi</h3>
+        <p>Har bir hosil yili uchun SIAT rasmiy qatori, haqiqiy tuman CSV’si yoki demo rejimida proksi ishlatiladi — qaysi biri ishlatilgani natijada ko‘rsatiladi.</p>
+      </article>
+      <article class="card">
+        <span class="num">2</span>
+        <h3>Mavsum iqlimi</h3>
+        <p>ERA5-Land/ERA5 kunlik harorat va yog‘in (mavjud bo‘lsa ET₀), NASA POWER radiatsiyasi — barchasi aynan shu mavsum sanalariga moslashtiriladi.</p>
+      </article>
+      <article class="card">
+        <span class="num">3</span>
+        <h3>Model va tekshiruv</h3>
+        <p>Kamida 12 ta mos mavsum, harorat va yog‘in bo‘yicha 80% qamrov; expanding-window OOF tekshiruvi va persistence benchmark bilan solishtirish.</p>
+      </article>
+    </div>
+
+    <div class="note">Kelajakdagi ob-havo hali kuzatilmagan: maqsad yili uchun oxirgi yillar mavsumiy normasi ishlatiladi. Shu sababli natija — <b>ssenariy</b>, kafolatlangan hosil emas.</div>
+  </div>
+  <span class="no">06</span>
+</section>
+
+<!-- 07 FOYDALILIK -->
+<section class="slide" id="foyda">
+  <div class="wrap">
+    <div class="kicker">06 · Foydalilik</div>
+    <h2>Bir platforma — bir nechta milliy vazifa</h2>
+    <p class="lead">Tizim davlat statistika tizimini almashtirmaydi: mavjud rasmiy ma’lumotlarni boyitadi, kuzatuv bo‘shliqlarini ko‘rsatadi va qarorlarni dalil bilan quvvatlaydi.</p>
+
+    <div class="grid-6">
+      <article class="card"><span class="tag">Oziq-ovqat xavfsizligi</span><p>Ekinlar bo‘yicha hosil ssenariysi va hududiy ishlab chiqarish xavfini mavsum boshida ko‘rish.</p></article>
+      <article class="card"><span class="tag">Suvni tejash</span><p>Iqlim, tuproq namligi va ekin holatini birlashtirib, suv stressi xaritasini yaratish.</p></article>
+      <article class="card"><span class="tag">Tuproqni asrash</span><p>Sho‘rlanish, organik modda va unumdorlik bo‘yicha hududiy monitoring.</p></article>
+      <article class="card"><span class="tag">Davlat rejalashtirishi</span><p>Tumanlar kesimida mavsumiy vaziyat, hosil bahosi va favqulodda xatarlar.</p></article>
+      <article class="card"><span class="tag">Fermer daromadi</span><p>Ekin tanlash, ekish muddati va sug‘orish qarorlarini raqamli asos bilan qo‘llash.</p></article>
+      <article class="card"><span class="tag">Moliya va sug‘urta</span><p>Kredit va sug‘urta uchun shaffof, tekshiriladigan hududiy ko‘rsatkichlar.</p></article>
+    </div>
+  </div>
+  <span class="no">07</span>
+</section>
+
+<!-- 08 FOYDA O'LCHANADI -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">07 · Natijani qanday o‘lchaymiz</div>
+    <h2>Foyda e’lon qilinmaydi — o‘lchanadi</h2>
+    <p class="lead">Foydalilikni taxminiy va’dalar bilan emas, tekshiriladigan ko‘rsatkichlar bilan baholaymiz. Har bir ko‘rsatkich pilot yakunida ochiq hisobotda e’lon qilinadi.</p>
+
+    <div class="grid-2">
+      <article class="card">
+        <span class="tag">Model aniqligi</span>
+        <h3>MAE / RMSE va benchmark</h3>
+        <p>Xatolik oddiy persistence benchmarkidan qanchalik yaxshi ekani vaqt bo‘yicha alohida hold-out to‘plamda o‘lchanadi. Yaxshilanish bo‘lmasa, model ishlab chiqarishga tavsiya etilmaydi.</p>
+      </article>
+      <article class="card">
+        <span class="tag">Ma’lumot qamrovi</span>
+        <h3>Qaysi hudud, qaysi ekin qoplanadi</h3>
+        <p>Har bir tuman–ekin kombinatsiyasi uchun yaroqli ma’lumot bor-yo‘qligi hisoblanadi. Qamrov foizi saytdagi audit panelida ochiq turadi.</p>
+      </article>
+      <article class="card">
+        <span class="tag">Qaror sifati</span>
+        <h3>Foydalanuvchi qaroriga ta’sir</h3>
+        <p>Pilotda fermer va tuman mutaxassislari bilan qaror o‘zgarishini kuzatamiz: tavsiya qabul qilindi, rad etildi yoki aniqlashtirish talab qilindi.</p>
+      </article>
+      <article class="card">
+        <span class="tag">Resurs samarasi</span>
+        <h3>Suv va xarajat ko‘rsatkichlari</h3>
+        <p>Bir gektarga sarflangan suv va asosiy agrotexnik xarajatlar bo‘yicha boshlang‘ich holat (baseline) va pilot natijasi solishtiriladi.</p>
+      </article>
+    </div>
+
+    <div class="note dark"><b>Ochiqlik qoidasi:</b> natija yaxshi chiqsa ham, chiqmasa ham e’lon qilinadi. Bu — platformaning asosiy farqi: ishonch dalil va cheklovni birga ko‘rsatishdan boshlanadi.</div>
+  </div>
+  <span class="no">08</span>
+</section>
+
+<!-- 09 PILOT -->
+<section class="slide" id="pilot">
+  <div class="wrap">
+    <div class="kicker">08 · Jizzax dala piloti</div>
+    <h2>Model dala haqiqati bilan tekshiriladi</h2>
+    <p class="lead">Pilotning vazifasi — sun’iy yo‘ldosh va iqlim ma’lumotlarini real tuproq hamda hosil o‘lchovlariga bog‘lash. Bu bosqich modelning ishonchliligini isbotlaydi.</p>
+
+    <div class="stats">
+      <div class="stat"><strong>2</strong><small>Tanlanadigan tuman (Jizzax viloyati)</small></div>
+      <div class="stat"><strong>60</strong><small>Geoteglangan dala nuqtasi</small></div>
+      <div class="stat"><strong>30</strong><small>Kompozit tuproq namunasi</small></div>
+      <div class="stat"><strong>3</strong><small>Asosiy ekin: bug‘doy, paxta, kartoshka</small></div>
+    </div>
+
+    <div class="grid-4">
+      <article class="card"><span class="tag">GPS va dala pasporti</span><p>Koordinata, ekin, nav, ekish va yig‘im sanasi, sug‘orish usuli hamda agrotexnik tadbirlar.</p></article>
+      <article class="card"><span class="tag">Tuproq laboratoriyasi</span><p>30 kompozit namuna: pH, EC, organik modda, NPK va mexanik tarkib. Panel akkreditatsiyalangan laboratoriya bilan kelishiladi.</p></article>
+      <article class="card"><span class="tag">Hosilni o‘lchash</span><p>Tanlangan maydonda crop-cut / tarozi protokoli, maydon o‘lchovi va yakuniy hosildorlik.</p></article>
+      <article class="card"><span class="tag">Masofadan zondlash</span><p>MODIS, SMAP, ERA5-Land va SoilGrids qatlamlari nuqta va mavsum bilan moslashtiriladi.</p></article>
+    </div>
+
+    <div class="note"><b>Pilot yakuni:</b> geobazali dala dataseti · laboratoriya natijalari · hosil benchmarki · model xatolik hisoboti · xavf paneli.</div>
+  </div>
+  <span class="no">09</span>
+</section>
+
+<!-- 10 YO'L XARITASI -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">09 · Milliy miqyosga chiqish</div>
+    <h2>Ikki tuman — milliy tizimning isbotlangan boshlanishi</h2>
+    <p class="lead">Har bir kengayish avvalgi bosqich validatsiyasiga bog‘liq: tasdiqlanmagan model keyingi hududga o‘tkazilmaydi.</p>
+
+    <div class="tl-grid">
+      <article class="ph">
+        <span>0–6 OY</span>
+        <h3>Jizzax piloti</h3>
+        <p>2 tuman · 3 ekin · dala va tuproq namunalari · real hosil bilan solishtirish · xatolik hisoboti.</p>
+      </article>
+      <article class="ph">
+        <span>6–18 OY</span>
+        <h3>Viloyat miqyosi</h3>
+        <p>Jizzaxning boshqa tumanlari · SIAT va laboratoriya integratsiyasi · ko‘p yillik sun’iy yo‘ldosh qatorlari.</p>
+      </article>
+      <article class="ph">
+        <span>18–36 OY</span>
+        <h3>O‘zbekiston</h3>
+        <p>14 viloyat · 199 tuman · standart ma’lumot API’si · davlat va xususiy sektor bilan integratsiya.</p>
+      </article>
+    </div>
+
+    <div class="note">Har bosqichda shart: rasmiy ma’lumot bilan kelishish · dala validatsiyasi · ma’lumot sifati auditi · modelning mustaqil sinovi.</div>
+  </div>
+  <span class="no">10</span>
+</section>
+
+<!-- 11 HAMKORLIK -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kicker">10 · Hamkorlik</div>
+    <h2>Kerak bo‘lgan narsa — ma’lumot, dala va ilm</h2>
+    <p class="lead">Maqsad — davlat, ilm-fan va bozor o‘rtasida uzoq muddatli agrar ma’lumot xizmatini qurish. Buning uchun uch turdagi hamkorlik muhim.</p>
+
+    <div class="grid-3">
+      <article class="card">
+        <span class="num">01</span>
+        <h3>Ma’lumot hamkorligi</h3>
+        <p>Tuman qishloq xo‘jaligi bo‘limlari va rasmiy statistika bilan qatorlarni kelishish, ochiq API yoki eksport shartlarini aniqlashtirish.</p>
+      </article>
+      <article class="card">
+        <span class="num">02</span>
+        <h3>Dala va laboratoriya</h3>
+        <p>Pilot dalalari, GPS pasportlari, hosil o‘lchovi va akkreditatsiyalangan tuproq laboratoriyasi bilan protokollarni tasdiqlash.</p>
+      </article>
+      <article class="card">
+        <span class="num">03</span>
+        <h3>Ilmiy hamkorlik</h3>
+        <p>Agrar universitet va ilmiy markazlar bilan model validatsiyasi, tanlanma protokoli va natijalarni mustaqil ko‘zdan kechirish.</p>
+      </article>
+    </div>
+
+    <div class="note dark"><b>Taklif:</b> pilot ma’lumotlari davlat hamkorlari bilan kelishilgan protokol asosida yuritiladi; shaxsiy ma’lumotlar himoyalanadi, natijalar manba va noaniqlik bilan e’lon qilinadi.</div>
+  </div>
+  <span class="no">11</span>
+</section>
+
+<!-- 12 MANBALAR -->
+<section class="slide" id="manbalar">
+  <div class="wrap">
+    <div class="kicker">11 · Dalil va cheklovlar</div>
+    <h2>Ishonch — manba va cheklovni ochiq ko‘rsatishdan boshlanadi</h2>
+    <p class="lead">Har bir ko‘rsatkich qaysi manbadan olingani, qaysi davrga tegishli ekani va qanday cheklovi borligi saytda ko‘rsatiladi.</p>
+
+    <div class="src-grid">
+      <div class="src"><span>Fazoviy ekin ma’lumoti</span><b>IFPRI MAPSPAM 2020</b><small>46 ekin bo‘yicha maydon, ishlab chiqarish va hosildorlikning 2020-yil fazoviy bahosi.</small></div>
+      <div class="src"><span>Rasmiy statistika</span><b>SIAT · 2010–2024</b><small>Viloyat darajasida ishlab chiqarish va ekilgan maydon nisbatidan hisoblangan hosildorlik.</small></div>
+      <div class="src"><span>Milliy statistika</span><b>FAOSTAT QCL · 1992–2024</b><small>O‘zbekiston milliy hosildorlik qatori; hududiy kuzatuv emas, proksi uchun asos.</small></div>
+      <div class="src"><span>Iqlim va ob-havo</span><b>Open-Meteo · ERA5-Land / ERA5</b><small>Joriy ob-havo, 7 kunlik prognoz va tarixiy mavsumiy qatorlar.</small></div>
+      <div class="src"><span>Agroiqlim</span><b>NASA POWER</b><small>Kunlik meteorologiya va quyosh radiatsiyasi (1984-yildan).</small></div>
+      <div class="src"><span>Sun’iy yo‘ldosh</span><b>NASA MODIS MOD13Q1</b><small>250 m NDVI/EVI, 16 kunlik kompozitlar; hozircha qisqa davr qamrovi.</small></div>
+    </div>
+
+    <div class="note"><b>Muhim cheklovlar:</b> tuman demo hosil tarixi — MAPSPAM bazasi va ota-viloyat trendidan olingan proksi; prognoz — ssenariy, rasmiy prognoz emas; tuproq kimyosi, SMAP namligi va dala o‘lchovlari hali modelga kiritilmagan. Maqsad — ularni pilotda o‘lchash va mustaqil tekshirish.</div>
+  </div>
+  <span class="no">12</span>
+</section>
+
+<footer class="deck-foot">
+  <div><b>OSH AgroAI Uzbekistan</b> — O‘zbekiston qishloq xo‘jaligi uchun ma’lumotga asoslangan qarorlar.</div>
+  <div class="foot-links">
+    <a href="https://sherzoddd2002.github.io/osh-agriculture-uzbekistan/">Platforma ↗</a>
+    <a href="https://github.com/Sherzoddd2002/osh-agriculture-uzbekistan">GitHub ↗</a>
+    <a href="https://github.com/Sherzoddd2002/osh-agriculture-uzbekistan/issues/new">Aloqa ↗</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var total = slides.length;
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+
+  function currentIndex(){
+    var mid = window.innerHeight * 0.4;
+    for (var i = slides.length - 1; i >= 0; i--) {
+      if (slides[i].getBoundingClientRect().top <= mid) return i;
+    }
+    return 0;
+  }
+
+  function paint(){
+    var i = currentIndex();
+    cur.textContent = pad(i + 1);
+    bar.style.width = ((i + 1) / total * 100) + '%';
+  }
+
+  function go(delta){
+    var i = currentIndex() + delta;
+    if (i < 0) i = 0;
+    if (i > total - 1) i = total - 1;
+    slides[i].scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault(); go(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault(); go(-1);
+    } else if (e.key === 'Home') {
+      e.preventDefault(); slides[0].scrollIntoView({behavior: 'smooth'});
+    } else if (e.key === 'End') {
+      e.preventDefault(); slides[total - 1].scrollIntoView({behavior: 'smooth'});
+    }
+  });
+
+  window.addEventListener('scroll', paint, {passive: true});
+  window.addEventListener('resize', paint);
+  paint();
+})();
+</script>
+</body>
+</html>
